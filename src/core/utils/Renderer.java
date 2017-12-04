@@ -1,9 +1,16 @@
 package core.utils;
 
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Renderer {
+public class Renderer implements Contextual{
+
+    private Context currentContext;
 
     private static final String DF_NS = "base";
 
@@ -18,6 +25,17 @@ public class Renderer {
         this.namespaces.put(ns, this.resolve(path));
     }
 
+    public void include(String view) {
+        try {
+            this.currentContext.getRequest().getRequestDispatcher(this.render(view))
+                    .include(this.currentContext.getRequest(), this.currentContext.getResponse());
+        } catch (ServletException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public String render(String path) {
         path = this.resolve(path);
         if(path.length() < 5 || path.substring(path.length() - 4) != ".jsp") {
@@ -26,7 +44,7 @@ public class Renderer {
         return path;
     }
 
-    public String resolve(String path) {
+    private String resolve(String path) {
         String ns;
 
         // '@ns/view'
@@ -46,4 +64,8 @@ public class Renderer {
         return ns + path;
     }
 
+    @Override
+    public void setContext(Context context) {
+        this.currentContext = context;
+    }
 }

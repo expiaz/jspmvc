@@ -1,6 +1,14 @@
 package controller;
 
-import javax.servlet.http.HttpServlet;
+import core.http.Router;
+import core.utils.Renderer;
 
-public class EleveController extends HttpServlet {
+import javax.servlet.http.HttpServletRequest;
+
+public class EleveController extends BaseController {
+
+    protected EleveController(Renderer renderer, Router router, HttpServletRequest request) {
+        super(renderer, router, request);
+    }
+
 }

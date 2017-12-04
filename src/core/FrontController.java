@@ -1,12 +1,11 @@
 package core;
 
-import controller.EleveController;
 import controller.IndexController;
 import core.http.HttpMethod;
 import core.http.Match;
 import core.http.Router;
+import core.utils.Context;
 import core.utils.Renderer;
-import core.utils.Resolver;
 import core.utils.Route;
 import core.utils.Viewspace;
 
@@ -23,7 +22,7 @@ import java.util.ArrayList;
 public class FrontController extends HttpServlet {
 
     private static Class[] controllers = new Class[]{
-            IndexController.class
+        IndexController.class
     };
 
     private static core.http.Route defaultRoute;
@@ -55,22 +54,24 @@ public class FrontController extends HttpServlet {
         this.renderer.addNamespace("shared", "@view/shared/");
 
         for(Class controller : controllers) {
-            for(Method action : Resolver.findByAnnotation(controller, Route.class)) {
-                String actionName = action.getName();
-                if(!actionName.endsWith("Action")) {
-                    throw new IllegalArgumentException(actionName + " must ends with 'Action'");
-                }
-                if(action.getParameterCount() < 2) {
-                    throw new IllegalArgumentException(actionName + " must have at least 2 parameters : Request and Response");
-                }
+            for(Method action : controller.getMethods()) {
+                if(action.isAnnotationPresent(Route.class)) {
+                    String actionName = action.getName();
+                    if(!actionName.endsWith("Action")) {
+                        throw new IllegalArgumentException(actionName + " must ends with 'Action'");
+                    }
+                    if(action.getParameterCount() < 2) {
+                        throw new IllegalArgumentException(actionName + " must have at least 2 parameters : Request and Response");
+                    }
 
-                Route annotation = action.getAnnotation(Route.class);
-                String name = annotation.name();
-                if(name.equals("__DEFAULT__")) {
-                    name = actionName;
-                }
-                for(HttpMethod verbose : annotation.methods()) {
-                    this.router.add(annotation.path(), controller, action, verbose, name);
+                    Route annotation = action.getAnnotation(Route.class);
+                    String name = annotation.name();
+                    if(name.equals("__DEFAULT__")) {
+                        name = actionName;
+                    }
+                    for(HttpMethod verbose : annotation.methods()) {
+                        this.router.add(annotation.path(), controller, action, verbose, name);
+                    }
                 }
             }
 
@@ -91,6 +92,10 @@ public class FrontController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) {
 
         try {
+            // setup contexts
+            this.router.setContext(new Context(request, response, request.getPathInfo(), request.getRequestURI()));
+            this.renderer.setContext(new Context(request, response, request.getPathInfo(), request.getRequestURI()));
+
             // globals
             request.setAttribute("router", this.router);
             request.setAttribute("renderer", this.renderer);
@@ -134,8 +139,8 @@ public class FrontController extends HttpServlet {
     protected void dispatch(HttpServletRequest request, HttpServletResponse response, Match match)
             throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException, ServletException, IOException {
 
-        Constructor<?> constructor = match.getRoute().getController().getDeclaredConstructor(Renderer.class, HttpServletRequest.class);
-        Object controller = constructor.newInstance(renderer, request);
+        Constructor<?> constructor = match.getRoute().getController().getDeclaredConstructor(Renderer.class, Router.class, HttpServletRequest.class);
+        Object controller = constructor.newInstance(renderer, router, request);
         Method action = match.getRoute().getAction();
 
         int numberParameters = 2 + match.getParameters().size();
@@ -157,6 +162,15 @@ public class FrontController extends HttpServlet {
 
         String view = (String) action.invoke(controller, parameters);
 
-        getServletContext().getRequestDispatcher(view).forward(request, response);
+        // redirect
+        if(view.equals("__REDIRECT__")) {
+            return;
+        }
+
+        getServletContext().getRequestDispatcher(this.renderer.render("@layout/header")).include(request, response);
+
+        getServletContext().getRequestDispatcher(view).include(request, response);
+
+        getServletContext().getRequestDispatcher(this.renderer.render("@layout/footer")).include(request, response);
     }
 }

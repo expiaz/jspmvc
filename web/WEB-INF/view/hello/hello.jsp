@@ -3,7 +3,9 @@
 
 <jsp:useBean id="name" class="java.lang.String" scope="request"/>
 
-<h1>Hello <%= name %> !</h1>
+<%-- <jsp:include page="i.jsp" /> --%>
+
+<h1>Hello ${ name } !</h1>
 <a href="<%= router.build("index.hello", new String[][] {
-    new String[] {"name", "jean"}
+    new String[] {"name", "joe"}
 }) %>">Link</a>

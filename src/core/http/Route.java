@@ -1,6 +1,10 @@
 package core.http;
 
+import core.utils.Argument;
+
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,10 +13,10 @@ public class Route {
 
     private static Pattern argumentsRegExp;
     static {
-        argumentsRegExp = Pattern.compile("\\{(\\w+): ([^}]+)\\}");
+        argumentsRegExp = Pattern.compile("\\{(\\w+)\\}");
     }
 
-    private List<List<Object>> arguments;
+    private List<RouteArgument> arguments;
 
     private String path;
     private String name;
@@ -34,45 +38,53 @@ public class Route {
 
         this.path = path;
 
+        // extract arguments of the route method action
+        Map<String, String> methodArguments = new HashMap<>();
+        for(Parameter p : action.getParameters()) {
+            if(p.isAnnotationPresent(Argument.class)) {
+                Argument a = p.getAnnotation(Argument.class);
+                String aName = a.name();
+                /*if(aName.equals("__DEFAULT__")) {
+                    aName = p.getName();
+                }*/
+                methodArguments.put(aName, a.mask());
+            }
+        }
+
         String pattern = path;
-        List<Object> entry;
-        List<List<Object>> patterns = new ArrayList<>();
+        RouteArgument rarg;
+        int offset = 0;
+        String argRegexp;
+        String argName;
 
         Matcher m = argumentsRegExp.matcher(path);
         while(m.find()) {
-            entry = new ArrayList<>();
-            entry.add(m.group(1));
-            entry.add(m.start());
-            entry.add(m.end());
-            arguments.add(entry);
-
-            entry = new ArrayList<>();
-            entry.add(m.group(2));
-            entry.add(m.start());
-            entry.add(m.end());
-            patterns.add(entry);
+            argName = m.group(1);
+            argRegexp = methodArguments.get(m.group(1));
+            rarg = new RouteArgument(argName, argRegexp, m.start(), m.end());
+            this.arguments.add(rarg);
+            // replace the {name} by (mask)
+            pattern = pattern.substring(offset, m.start()) + "(" + argRegexp + ")" + pattern.substring(m.end() - offset);
+            // increment offset by the size of the missing characters (fullgroup - replaced group)
+            offset += m.end() - m.start() - argRegexp.length();
         }
 
-        if(patterns.size() > 0) {
-            for(int i = patterns.size() - 1; i >= 0; i--) {
-                entry = patterns.get(i);
-                pattern = pattern.substring(0, (Integer) entry.get(1)) + "(" + entry.get(0).toString() + ")" + pattern.substring((Integer) entry.get(2));
-            }
+        if(methodArguments.size() != this.arguments.size()) {
+            throw new InvalidParameterException(controller.getName() + "::" + action.getName() + " expected " + methodArguments.size() + " but route got " + this.arguments.size());
         }
 
         this.pattern = Pattern.compile(pattern);
     }
 
-    public String build(Map<String, String> arguments) {
-
+    String build(Map<String, String> arguments) {
         String path = this.path;
+        int offset = 0;
 
-        if(this.arguments.size() > 0) {
-            List<Object> entry;
-            for(int i = this.arguments.size() - 1; i >= 0; i--) {
-                entry = this.arguments.get(i);
-                path = path.substring(0, (Integer) entry.get(1)) + arguments.get(entry.get(0).toString()) + path.substring((Integer) entry.get(2));
-            }
+        for(RouteArgument arg : this.arguments) {
+            // replace the {name} by (mask)
+            path = path.substring(offset, arg.start) + arguments.get(arg.name) + path.substring(arg.end - offset);
+            // increment offset by the size of the missing characters (fullgroup - replaced group)
+            offset += arg.end - arg.start - arg.name.length();
         }
 
         return path;
@@ -94,7 +106,23 @@ public class Route {
         return action;
     }
 
-    public core.http.HttpMethod getMethod() {
+    public HttpMethod getMethod() {
         return method;
     }
+
+    private class RouteArgument {
+
+        String name;
+        String mask;
+        int start;
+        int end;
+
+        RouteArgument(String name, String mask, int start, int end){
+            this.name = name;
+            this.mask = mask;
+            this.start = start;
+            this.end = end;
+        }
+    }
 }
+
