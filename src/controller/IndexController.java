@@ -1,25 +1,33 @@
 package controller;
 
+import core.utils.Argument;
 import core.utils.Renderer;
+import core.utils.Route;
+import core.utils.Viewspace;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
+@Viewspace(namespace = "hello", path = "@view/hello/")
 public class IndexController extends BaseController {
 
     public IndexController(Renderer renderer, HttpServletRequest request) {
         super(renderer, request);
     }
 
-    public String errorAction(HttpServletRequest request, HttpServletResponse response, List<String> parameters){
+    @Route(name = "error", path = "/error")
+    public String errorAction(HttpServletRequest request, HttpServletResponse response){
         return this.render("@shared/error404");
     }
 
-    public String helloAction(HttpServletRequest request, HttpServletResponse response, List<String> parameters){
-        this.context.put("name", parameters.get(0));
+    @Route(name = "index")
+    public String indexAction(HttpServletRequest request, HttpServletResponse response){
+        return this.render("@hello/i");
+    }
+
+    @Route(name = "index.hello", path = "/hello/{name}/")
+    public String helloAction(HttpServletRequest request, HttpServletResponse response, @Argument(mask = "/") String name){
+        this.context.put("name", name);
         return this.render("@hello/hello");
     }
 
