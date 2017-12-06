@@ -1,23 +1,20 @@
 package core.http;
 
-import core.utils.Context;
-import core.utils.Contextual;
+import core.utils.Container;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
 
-public class Router implements Contextual {
+public class Router {
 
-    private Context currentContext;
+    private Container container;
 
     private Map<String, Route> routesByName;
     private List<Route> routes;
 
-    public Router() {
+    public Router(Container container) {
+        this.container = container;
         this.routes = new ArrayList<>();
         this.routesByName = new HashMap<>();
     }
@@ -32,20 +29,15 @@ public class Router implements Contextual {
         routes.sort((a, b) -> a.getPattern().toString().length() >= b.getPattern().toString().length() ? 1 : -1);
     }
 
-    public Match match(HttpServletRequest request) {
+    public Match match(Request request) {
 
         Matcher m;
         List<String> parameters = new ArrayList<>();
-        String path = request.getPathInfo();
-
-        if(path.length() > 1 && path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
 
         for(Route route : this.routes) {
-            if(route.getMethod().toString().equals(request.getMethod())) {
+            if(route.getMethod() == request.getMethod()) {
                 // match the url to the pattern, collect the groups and call method with requ resp and params
-                m = route.getPattern().matcher(path);
+                m = route.getPattern().matcher(request.getPath());
                 if(m.matches()) {
                     for(int i = 0; i < m.groupCount(); i++) {
                         // i + 1 to pass over the base group
@@ -59,8 +51,11 @@ public class Router implements Contextual {
         return null;
     }
 
-    public String build(String route, String[][] arguments) {
+    public String build(String route) {
+        return this.build(route, new String[][] {});
+    }
 
+    public String build(String route, String[][] arguments) {
         if(! this.routesByName.containsKey(route)) {
             throw new NoSuchElementException(route + "isn't a known route name");
         }
@@ -71,32 +66,25 @@ public class Router implements Contextual {
             realMap.put(entry[0], entry[1]);
         }
 
-        String prefix = this.currentContext.getRequestUri();
-        String needle = this.currentContext.getPathInfo();
-        int index = prefix.indexOf(needle);
-        prefix = prefix.substring(0, index);
+        Request request = (Request) this.container.get(Request.class);
 
-        return prefix + r.build(realMap);
+        return request.getBasePath() + r.build(realMap);
     }
 
-    public String redirect(String route, String[][] arguments) {
-        try {
-            this.currentContext.getRequest().getRequestDispatcher(this.build(route, arguments)).forward(this.currentContext.getRequest(), this.currentContext.getResponse());
-        } catch (ServletException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+    public String build(String route, String[][] arguments, String[][] query) {
+        String queryString = "";
+        for(String[] q : query) {
+            if(queryString.length() == 0) {
+                queryString += "?" + q[0] + "=" + q[1];
+            } else {
+                queryString += "&" + q[0] + "=" + q[1];
+            }
         }
 
-        return "__REDIRECT__";
+        return this.build(route, arguments) + queryString;
     }
 
-    public String redirect(String route) {
-        return this.redirect(route, new String[][]{});
-    }
-
-    @Override
-    public void setContext(Context context) {
-        this.currentContext = context;
+    public String build(String route, String[][] arguments, String[][] query, String hash) {
+        return this.build(route, arguments, query) + "#" + hash;
     }
 }

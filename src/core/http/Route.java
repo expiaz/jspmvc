@@ -60,7 +60,10 @@ public class Route {
         Matcher m = argumentsRegExp.matcher(path);
         while(m.find()) {
             argName = m.group(1);
-            argRegexp = methodArguments.get(m.group(1));
+            if(! methodArguments.containsKey(argName)) {
+                throw new InvalidParameterException(controller.getName() + "::" + action.getName() + " parameter " + argName + " not found");
+            }
+            argRegexp = methodArguments.get(argName);
             rarg = new RouteArgument(argName, argRegexp, m.start(), m.end());
             this.arguments.add(rarg);
             // replace the {name} by (mask)

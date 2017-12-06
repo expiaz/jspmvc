@@ -1,32 +1,49 @@
 package controller;
 
+import core.http.Request;
+import core.http.Response;
 import core.http.Router;
+import core.utils.Inject;
 import core.utils.Renderer;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class BaseController {
 
-    protected HttpServletRequest request;
-    protected Renderer renderer;
-    protected Router router;
+    private Response response;
+    private Request request;
 
-    protected Map<String, Object> context;
+    Renderer renderer;
+    Router router;
 
-    protected BaseController(core.utils.Renderer renderer, Router router, HttpServletRequest request) {
+    Map<String, Object> context;
+
+    BaseController(@Inject Renderer renderer, @Inject Router router,
+                             @Inject Request request, @Inject Response response) {
         this.renderer = renderer;
         this.router = router;
         this.request = request;
+        this.response = response;
         this.context = new HashMap<>();
     }
 
-    protected String render(String viewPath) {
-        for (Map.Entry<String, Object> entry : this.context.entrySet()) {
-            this.request.setAttribute(entry.getKey(), entry.getValue());
+    Response render(String viewPath, String[][] arguments) {
+        for(String[] arg : arguments) {
+            this.context.put(arg[0], arg[1]);
         }
-        return this.renderer.render(viewPath);
+        return this.render(viewPath);
+    }
+
+    Response render(String viewPath) {
+        for (Map.Entry<String, Object> entry : this.context.entrySet()) {
+            this.request.getRequest().setAttribute(entry.getKey(), entry.getValue());
+        }
+        return this.response.render(this.renderer.render(viewPath));
+    }
+
+    Response redirect(String url) {
+        return this.response.redirect(url);
     }
 
 }
