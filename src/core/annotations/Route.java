@@ -1,4 +1,4 @@
-package core.utils;
+package core.annotations;
 
 import core.http.HttpMethod;
 

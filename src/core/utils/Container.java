@@ -1,11 +1,11 @@
 package core.utils;
 
+import core.annotations.Inject;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Container {
@@ -13,7 +13,7 @@ public class Container {
     private Map<String, Object> singletons;
     private Map<String, Factory> factories;
 
-    public Container(){
+    public Container() {
         this.singletons = new HashMap<>();
         this.factories = new HashMap<>();
 
@@ -49,8 +49,8 @@ public class Container {
     }
 
     public Object get(String name, boolean factory) throws ClassNotFoundException {
-        if(factory) {
-            if(! this.factories.containsKey(name)){
+        if (factory) {
+            if (!this.factories.containsKey(name)) {
                 try {
                     this.factory(name, container -> {
                         try {
@@ -60,7 +60,7 @@ public class Container {
                             return null;
                         }
                     });
-                 } catch (Exception e) {
+                } catch (Exception e) {
                     throw new ClassNotFoundException(name + " isn't a known factory");
                 }
             }
@@ -68,8 +68,8 @@ public class Container {
             return this.factories.get(factory).create(this);
         }
 
-        if(! this.singletons.containsKey(name)) {
-            try{
+        if (!this.singletons.containsKey(name)) {
+            try {
                 this.singleton(name, this.get(name, true));
             } catch (ClassNotFoundException e) {
                 try {
@@ -85,29 +85,39 @@ public class Container {
 
     public Object resolve(Class clazz)
             throws ClassNotFoundException, IllegalAccessException,
-            InvocationTargetException, InstantiationException
-    {
-        List<Parameter> toInject;
-        for(Constructor constructor : clazz.getDeclaredConstructors()) {
-            toInject = new ArrayList<>();
-            for(Parameter parameter : constructor.getParameters()) {
-                if(parameter.isAnnotationPresent(Inject.class)) {
-                    toInject.add(parameter);
+            InvocationTargetException, InstantiationException {
+        return this.resolve(clazz, new HashMap<>());
+    }
+
+    public Object resolve(Class clazz, Map<Class, Object> arguments)
+            throws ClassNotFoundException, IllegalAccessException,
+            InvocationTargetException, InstantiationException {
+
+        for (Constructor constructor : clazz.getDeclaredConstructors()) {
+            Object[] resolved = new Object[constructor.getParameterCount()];
+            int i = 0;
+            Inject infos;
+            for (Parameter parameter : constructor.getParameters()) {
+
+                if(arguments.containsKey(parameter.getType())) {
+
+                    resolved[i++] = arguments.get(parameter.getType());
+
+                } else if(parameter.isAnnotationPresent(Inject.class)) {
+
+                    infos = parameter.getAnnotation(Inject.class);
+                    resolved[i++] = this.get(
+                            infos.key().equals("__DEFAULT__")
+                                    ? parameter.getType().getName()
+                                    : infos.key(),
+                            infos.factory()
+                    );
+
+                } else {
+                    break;
                 }
             }
-            if(toInject.size() == constructor.getParameterCount()) {
-                Object[] resolved = new Object[constructor.getParameterCount()];
-                int i = 0;
-                //resolve the constructor
-                for (Parameter p : toInject) {
-                    Inject infos = p.getAnnotation(Inject.class);
-                    String key = infos.key();
-                    if(key.equals("__DEFAULT__")) {
-                        key = p.getType().getName();
-                    }
-                    resolved[i] = this.get(key, infos.factory());
-                    i++;
-                }
+            if (i == constructor.getParameterCount()) {
                 // return the instance
                 return constructor.newInstance(resolved);
             }

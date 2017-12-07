@@ -32,16 +32,16 @@ public class Router {
     public Match match(Request request) {
 
         Matcher m;
-        List<String> parameters = new ArrayList<>();
 
         for(Route route : this.routes) {
             if(route.getMethod() == request.getMethod()) {
                 // match the url to the pattern, collect the groups and call method with requ resp and params
                 m = route.getPattern().matcher(request.getPath());
                 if(m.matches()) {
+                    String[] parameters = new String[route.getNumberOfExpectedParameters()];
                     for(int i = 0; i < m.groupCount(); i++) {
                         // i + 1 to pass over the base group
-                        parameters.add(m.group(i + 1));
+                        parameters[i] = m.group(i + 1);
                     }
                     return new Match(route, parameters);
                 }
@@ -68,7 +68,7 @@ public class Router {
 
         Request request = (Request) this.container.get(Request.class);
 
-        return request.getBasePath() + r.build(realMap);
+        return request.getContextPath() + r.build(realMap);
     }
 
     public String build(String route, String[][] arguments, String[][] query) {

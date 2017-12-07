@@ -6,7 +6,7 @@ public class Request {
 
     private HttpServletRequest request;
 
-    private String basePath;
+    private String contextPath;
     private String path;
 
     public Request(HttpServletRequest request) {
@@ -21,7 +21,7 @@ public class Request {
             path = path.substring(0, path.length() - 1);
         }
 
-        this.basePath = prefix;
+        this.contextPath = prefix;
         this.path = path;
     }
 
@@ -37,8 +37,8 @@ public class Request {
         return this.getParameter(key, null);
     }
 
-    public String getBasePath(){
-        return this.basePath;
+    public String getContextPath(){
+        return this.contextPath;
     }
 
     public String getPath(){
@@ -46,10 +46,10 @@ public class Request {
     }
 
     public HttpMethod getMethod(){
-        if(this.request.getMethod() == HttpMethod.GET.name()){
+        if(this.request.getMethod().equals(HttpMethod.GET.name())){
             return HttpMethod.GET;
         }
-        if(this.request.getMethod() == HttpMethod.POST.name()){
+        if(this.request.getMethod().equals(HttpMethod.POST.name())){
             return HttpMethod.POST;
         }
 

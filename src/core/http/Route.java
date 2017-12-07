@@ -1,6 +1,6 @@
 package core.http;
 
-import core.utils.Argument;
+import core.annotations.Argument;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -73,7 +73,7 @@ public class Route {
         }
 
         if(methodArguments.size() != this.arguments.size()) {
-            throw new InvalidParameterException(controller.getName() + "::" + action.getName() + " expected " + methodArguments.size() + " but route got " + this.arguments.size());
+            throw new InvalidParameterException(controller.getName() + "::" + action.getName() + " expected " + methodArguments.size() + " parameters but route got " + this.arguments.size());
         }
 
         this.pattern = Pattern.compile(pattern);
@@ -111,6 +111,10 @@ public class Route {
 
     public HttpMethod getMethod() {
         return method;
+    }
+
+    public int getNumberOfExpectedParameters(){
+        return this.arguments.size();
     }
 
     private class RouteArgument {

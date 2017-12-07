@@ -5,9 +5,9 @@ import java.util.List;
 public class Match {
 
     private Route route;
-    private List<String> parameters;
+    private String[] parameters;
 
-    public Match(Route route, List<String> parameters) {
+    public Match(Route route, String[] parameters) {
         this.route = route;
         this.parameters = parameters;
     }
@@ -16,7 +16,7 @@ public class Match {
         return route;
     }
 
-    public List<String> getParameters() {
+    public String[] getParameters() {
         return parameters;
     }
 }

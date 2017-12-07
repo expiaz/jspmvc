@@ -1,9 +1,10 @@
-package core.utils;
+package core.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EndPoint {
-    String value();
+public @interface Viewspace {
+    String namespace();
+    String path();
 }

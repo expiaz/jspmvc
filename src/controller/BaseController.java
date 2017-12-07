@@ -3,7 +3,7 @@ package controller;
 import core.http.Request;
 import core.http.Response;
 import core.http.Router;
-import core.utils.Inject;
+import core.annotations.Inject;
 import core.utils.Renderer;
 
 import java.util.HashMap;

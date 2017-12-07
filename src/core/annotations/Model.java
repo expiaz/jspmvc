@@ -1,4 +1,4 @@
-package core.utils;
+package core.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
