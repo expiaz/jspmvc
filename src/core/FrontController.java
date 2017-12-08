@@ -55,6 +55,11 @@ public class FrontController extends HttpServlet {
         this.renderer.addNamespace("shared", "@view/shared/");
         this.renderer.addNamespace("error", "@view/error/");
 
+        this.renderer.addNamespace("assets", "/assets/");
+        this.renderer.addNamespace("css", "@assets/css/");
+        this.renderer.addNamespace("js", "@assets/js/");
+        this.renderer.addNamespace("img", "@assets/img/");
+
         this.container.singleton(Router.class, this.router);
         this.container.singleton(Renderer.class, this.renderer);
 

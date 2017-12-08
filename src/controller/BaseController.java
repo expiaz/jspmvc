@@ -46,6 +46,12 @@ public abstract class BaseController {
         return this.response.redirect(url);
     }
 
+    Response notFound() {
+        return this.response.redirect(this.router.build("@index/error", new String[][] {
+            new String[] {"code", "404"}
+        }));
+    }
+
     public Response getResponse(){
         return this.response;
     }

@@ -1,6 +1,8 @@
 package core.http;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Request {
 
@@ -9,8 +11,12 @@ public class Request {
     private String contextPath;
     private String path;
 
+    private Map<String, String> overridenParameters;
+
     public Request(HttpServletRequest request) {
         this.request = request;
+
+        this.overridenParameters = new HashMap<>();
 
         String path = request.getPathInfo();
         String prefix = request.getRequestURI();
@@ -26,6 +32,10 @@ public class Request {
     }
 
     public String getParameter(String key, String defaut){
+        if(this.overridenParameters.containsKey(key)) {
+            return this.overridenParameters.get(key);
+        }
+
         String value = this.request.getParameter(key);
         if(value == null) {
             return defaut;
@@ -35,6 +45,10 @@ public class Request {
 
     public String getParameter(String key){
         return this.getParameter(key, null);
+    }
+
+    public void setParameter(String key, String value) {
+        this.overridenParameters.put(key, value);
     }
 
     public String getContextPath(){
@@ -58,5 +72,13 @@ public class Request {
 
     public HttpServletRequest getRequest() {
         return request;
+    }
+
+    public boolean isGet(){
+        return this.getMethod() == HttpMethod.GET;
+    }
+
+    public boolean isPost(){
+        return this.getMethod() == HttpMethod.POST;
     }
 }

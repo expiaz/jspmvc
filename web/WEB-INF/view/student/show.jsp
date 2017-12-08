@@ -7,3 +7,4 @@
 
 <h1>${ student.nom }</h1>
 <h2>${ student.prenom }</h2>
+<a href="<%= router.build("student.edit", new String[][]{ new String[]{"student", student.getId().toString() }}) %>">Edit</a>

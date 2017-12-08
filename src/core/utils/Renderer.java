@@ -1,5 +1,8 @@
 package core.utils;
 
+import core.http.Request;
+
+import javax.servlet.ServletContext;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +30,10 @@ public class Renderer{
             path += ".jsp";
         }
         return path;
+    }
+
+    public String asset(String path) {
+        return ((ServletContext) this.container.get(ServletContext.class)).getContextPath() + this.resolve(path);
     }
 
     private String resolve(String path) {

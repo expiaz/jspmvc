@@ -2,52 +2,39 @@ package factory;
 
 import entity.Etudiant;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 
 public class GestionFactory {
 
 	/////// SIMULATION DE LA PERSISTANCE DES ETUDIANTS ET DES ABSENCES
-	
+	private static int ID = 0;
+	private static Random rand = new Random();
+
 	// CHARGER en premier à l'execution du projet (car constante : static final)
-	private static final HashMap<Integer, Etudiant> LISTE_ID_ETUDIANTS = intializeListEtudiants();
-	private static final HashMap<Integer, Integer> LISTE_ID_ABSENCES = intializelistEtudiantAbsence();
+	private static final Map<Integer, Etudiant> LISTE_ID_ETUDIANTS = new HashMap<>();
+	private static final Map<Integer, Integer> LISTE_ID_ABSENCES = new HashMap<>();
+	private static final Map<Integer, List<Integer>> LISTE_ID_NOTES = new HashMap<>();
 
-	// Initialisation des étudiants
-	private static HashMap<Integer, Etudiant> intializeListEtudiants() {
 
-		// Création des étudiants
-		Etudiant etu1 = new Etudiant(0, "Brunet-Manquat", "Francis");
-		Etudiant etu2 = new Etudiant(1, "Martin", "Philippe");
+	static {
+		save(create("Brunet-Manquat", "Francis"));
+		save(create("Martin", "Philippe"));
 
-		// Création du hasmap (association clé/valeur)
-		// Association id -> etudiant
-		HashMap<Integer, Etudiant> listEtudiantsTemp = new HashMap<>();
-		listEtudiantsTemp.put(etu1.getId(), etu1);
-		listEtudiantsTemp.put(etu2.getId(), etu2);
-
-		//
-		return listEtudiantsTemp;
-	}
-
-	// Initialisation des absences
-	private static final HashMap<Integer, Integer> intializelistEtudiantAbsence() {
-
-		// Création du hasmap (association clé/valeur)
-		// Association etudiant id -> absences
-		HashMap<Integer, Integer> listEtudiantAbsenceTemp = new HashMap<>();
-		
-		// Le nombre d'absences est généré aléatoirement
-		Random rand = new Random();
+		Map<Integer, Integer> listEtudiantAbsenceTemp = new HashMap<>();
 		for (Etudiant etudiant : LISTE_ID_ETUDIANTS.values()) {
 			listEtudiantAbsenceTemp.put(etudiant.getId(), rand.nextInt(10));
 		}
 
-		//
-		return listEtudiantAbsenceTemp;
+		Map<Integer, List<Integer>> listNotesTemp = new HashMap<>();
+		List<Integer> listTemp;
+		for (Etudiant etudiant : LISTE_ID_ETUDIANTS.values()) {
+			listTemp = new ArrayList<>();
+			for(int i = 0; i < rand.nextInt(10); i++) {
+				listTemp.add(rand.nextInt(20));
+			}
+			listNotesTemp.put(etudiant.getId(), listTemp);
+		}
 	}
-
 	
 	/////// METHODES A UTILISER
 	// Retourne l'ensemble des etudiants
@@ -63,6 +50,24 @@ public class GestionFactory {
 	// Retourne le nombre d'absences d'un etudiant en fonction de son id 
 	public static Integer getAbsencesByEtudiantId(int id) {
 		return LISTE_ID_ABSENCES.get(id);
+	}
+
+	// Retourne les notes d'un etudiant en fonction de son id
+	public static List<Integer> getNotesByEtudiantId(int id) {
+		return LISTE_ID_NOTES.get(id);
+	}
+
+
+	public static Etudiant create(String nom, String prenom) {
+		return new Etudiant(++ID, nom, prenom);
+	}
+
+	public static void save(Etudiant e) {
+		LISTE_ID_ETUDIANTS.put(e.getId(), e);
+	}
+
+	public static void remove(Etudiant e){
+		LISTE_ID_ETUDIANTS.remove(e.getId());
 	}
 
 }
