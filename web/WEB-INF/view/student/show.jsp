@@ -3,4 +3,7 @@
 <jsp:useBean id="router" class="core.http.Router" scope="request"/>
 <jsp:useBean id="renderer" class="core.utils.Renderer" scope="request"/>
 
-Index
+<jsp:useBean id="student" class="entity.Etudiant" scope="request"/>
+
+<h1>${ student.nom }</h1>
+<h2>${ student.prenom }</h2>

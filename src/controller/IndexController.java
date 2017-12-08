@@ -16,13 +16,13 @@ public class IndexController extends BaseController {
         super(renderer, router, request, response);
     }
 
-    @Route(name = "index")
-    public Response indexAction(Request request, Response response) {
-        return this.render("@view/index");
+    @Route(name = "index.home")
+    public Response indexAction(Request request) {
+        return this.render("@view/home");
     }
 
-    @Route(name = "error", path = "/error/{code}")
-    public Response errorAction(Request request, Response response, @Argument(mask = "\\d{3}", name = "code") String error) {
+    @Route(name = "index.error", path = "/error/{code}")
+    public Response errorAction(Request request, @Argument(mask = "\\d{3}", name = "code") String error) {
         this.context.put("code", error);
         return this.render("@error/404");
     }

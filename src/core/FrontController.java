@@ -1,6 +1,7 @@
 package core;
 
 import controller.IndexController;
+import controller.StudentController;
 import core.annotations.Path;
 import core.annotations.Viewspace;
 import core.http.*;
@@ -19,7 +20,8 @@ import java.lang.reflect.Method;
 public class FrontController extends HttpServlet {
 
     private static Class[] controllers = new Class[]{
-        IndexController.class
+        IndexController.class,
+        StudentController.class
     };
 
     private static core.http.Route defaultRoute;
@@ -29,7 +31,7 @@ public class FrontController extends HttpServlet {
                 "default",
                 "{code}",
                 IndexController.class,
-                IndexController.class.getMethod("errorAction", Request.class, Response.class, String.class),
+                IndexController.class.getMethod("errorAction", Request.class, String.class),
                 HttpMethod.GET
             );
         } catch (NoSuchMethodException e) {
@@ -68,8 +70,8 @@ public class FrontController extends HttpServlet {
                     if(!actionName.endsWith("Action")) {
                         throw new IllegalArgumentException(actionName + " must ends with 'Action'");
                     }
-                    if(action.getParameterCount() < 2) {
-                        throw new IllegalArgumentException(actionName + " must have at least 2 parameters : Request and Response");
+                    if(action.getParameterCount() < 1) {
+                        throw new IllegalArgumentException(actionName + " must have at least 1 parameter : Request");
                     }
 
                     Route annotation = action.getAnnotation(Route.class);
@@ -105,6 +107,9 @@ public class FrontController extends HttpServlet {
             this.container.singleton(HttpServletResponse.class, response);
             this.container.singleton(ServletContext.class, getServletContext());
 
+            request.setCharacterEncoding("UTF-8");
+            response.setCharacterEncoding("UTF-8");
+
             // globals
             request.setAttribute("router", this.router);
             request.setAttribute("renderer", this.renderer);
@@ -138,7 +143,7 @@ public class FrontController extends HttpServlet {
         Object controller = this.container.resolve(match.getRoute().getController());
         Method action = match.getRoute().getAction();
 
-        int numberParameters = 2 + match.getParameters().length;
+        int numberParameters = 1 + match.getParameters().length;
         if(action.getParameterCount() != numberParameters) {
             throw new IllegalArgumentException(
                     action.getName() +
@@ -149,8 +154,7 @@ public class FrontController extends HttpServlet {
 
         Object[] parameters = new Object[numberParameters];
         parameters[0] = request;
-        parameters[1] = response;
-        int i = 1;
+        int i = 0;
         for (String p : match.getParameters()) {
             parameters[++i] = p;
         }

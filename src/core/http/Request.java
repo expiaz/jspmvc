@@ -14,7 +14,7 @@ public class Request {
 
         String path = request.getPathInfo();
         String prefix = request.getRequestURI();
-        int index = prefix.indexOf(path);
+        int index = prefix.lastIndexOf(path);
         prefix = prefix.substring(0, index);
 
         if(path.length() > 1 && path.endsWith("/")) {

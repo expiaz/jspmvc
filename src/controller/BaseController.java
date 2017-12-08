@@ -19,7 +19,7 @@ public abstract class BaseController {
 
     Map<String, Object> context;
 
-    BaseController(@Inject Renderer renderer, @Inject Router router,
+    public BaseController(@Inject Renderer renderer, @Inject Router router,
                              @Inject Request request, @Inject Response response) {
         this.renderer = renderer;
         this.router = router;
@@ -44,6 +44,10 @@ public abstract class BaseController {
 
     Response redirect(String url) {
         return this.response.redirect(url);
+    }
+
+    public Response getResponse(){
+        return this.response;
     }
 
 }
