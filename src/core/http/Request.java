@@ -1,5 +1,7 @@
 package core.http;
 
+import core.utils.ParameterBag;
+
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;

@@ -9,6 +9,7 @@
 
 <jsp:useBean id="router" class="core.http.Router" scope="request"/>
 <jsp:useBean id="renderer" class="core.utils.Renderer" scope="request"/>
+<jsp:useBean id="container" class="core.utils.Container" scope="request"/>
 
 <jsp:useBean id="title" class="java.lang.String" scope="request"/>
 
@@ -35,6 +36,7 @@
           integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">--%>
 </head>
 <body>
+
 <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
     <a class="navbar-brand" href="<%= router.build("index.home") %>">Home</a>
 

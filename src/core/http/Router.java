@@ -1,6 +1,7 @@
 package core.http;
 
 import core.utils.Container;
+import core.utils.ParameterBag;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -52,39 +53,33 @@ public class Router {
     }
 
     public String build(String route) {
-        return this.build(route, new String[][] {});
+        return this.build(route, new ParameterBag());
     }
 
-    public String build(String route, String[][] arguments) {
+    public String build(String route, ParameterBag arguments) {
         if(! this.routesByName.containsKey(route)) {
             throw new NoSuchElementException(route + "isn't a known route name");
         }
 
         Route r = this.routesByName.get(route);
-        Map<String, String> realMap = new HashMap<>();
-        for(String[] entry : arguments){
-            realMap.put(entry[0], entry[1]);
-        }
 
         Request request = (Request) this.container.get(Request.class);
 
-        return request.getContextPath() + r.build(realMap);
+        return request.getContextPath() + r.build(arguments);
     }
 
-    public String build(String route, String[][] arguments, String[][] query) {
+    public String build(String route, ParameterBag arguments, ParameterBag query) {
         String queryString = "";
-        for(String[] q : query) {
+
+        for(Map.Entry<String, Object> entry : query.entrySet()) {
             if(queryString.length() == 0) {
-                queryString += "?" + q[0] + "=" + q[1];
+                queryString += "?" + entry.getKey() + "=" + entry.getValue().toString();
             } else {
-                queryString += "&" + q[0] + "=" + q[1];
+                queryString += "&" + entry.getKey() + "=" + entry.getValue().toString();
             }
         }
 
         return this.build(route, arguments) + queryString;
     }
 
-    public String build(String route, String[][] arguments, String[][] query, String hash) {
-        return this.build(route, arguments, query) + "#" + hash;
-    }
 }

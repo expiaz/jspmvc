@@ -1,6 +1,7 @@
 package core.http;
 
 import core.annotations.Argument;
+import core.utils.ParameterBag;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -79,13 +80,13 @@ public class Route {
         this.pattern = Pattern.compile(pattern);
     }
 
-    String build(Map<String, String> arguments) {
+    String build(ParameterBag arguments) {
         String path = this.path;
         int offset = 0;
 
         for(RouteArgument arg : this.arguments) {
             // replace the {name} by (mask)
-            path = path.substring(offset, arg.start) + arguments.get(arg.name) + path.substring(arg.end - offset);
+            path = path.substring(offset, arg.start) + arguments.get(arg.name).toString() + path.substring(arg.end - offset);
             // increment offset by the size of the missing characters (fullgroup - replaced group)
             offset += arg.end - arg.start - arg.name.length();
         }

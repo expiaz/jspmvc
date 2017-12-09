@@ -1,5 +1,6 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="entity.Etudiant" %>
+<%@ page import="core.utils.ParameterBag" %>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
@@ -11,9 +12,7 @@
         for (Etudiant student: (Collection<Etudiant>) request.getAttribute("students")) {
     %>
         <li>
-            <a href="<%= router.build("student.show", new String[][] {
-                    new String[]{"student", student.getId().toString()}
-            }) %>">
+            <a href="<%= router.build("student.show", new ParameterBag().add("student", student.getId())) %>">
                 <strong><%= student.getNom() %></strong> <%= student.getPrenom() %>
             </a>
         </li>

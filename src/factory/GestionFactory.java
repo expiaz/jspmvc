@@ -59,7 +59,7 @@ public class GestionFactory {
 
 
 	public static Etudiant create(String nom, String prenom) {
-		return new Etudiant(++ID, nom, prenom);
+		return new Etudiant(++ID, prenom, nom);
 	}
 
 	public static void save(Etudiant e) {

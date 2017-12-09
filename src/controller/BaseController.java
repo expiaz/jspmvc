@@ -4,6 +4,7 @@ import core.http.Request;
 import core.http.Response;
 import core.http.Router;
 import core.annotations.Inject;
+import core.utils.ParameterBag;
 import core.utils.Renderer;
 
 import java.util.HashMap;
@@ -17,7 +18,7 @@ public abstract class BaseController {
     Renderer renderer;
     Router router;
 
-    Map<String, Object> context;
+    ParameterBag context;
 
     public BaseController(@Inject Renderer renderer, @Inject Router router,
                              @Inject Request request, @Inject Response response) {
@@ -25,12 +26,12 @@ public abstract class BaseController {
         this.router = router;
         this.request = request;
         this.response = response;
-        this.context = new HashMap<>();
+        this.context = new ParameterBag();
     }
 
-    Response render(String viewPath, String[][] arguments) {
-        for(String[] arg : arguments) {
-            this.context.put(arg[0], arg[1]);
+    Response render(String viewPath, ParameterBag arguments) {
+        for(Map.Entry<String, Object> entry : arguments.entrySet()) {
+            this.context.put(entry.getKey(), entry.getValue());
         }
         return this.render(viewPath);
     }
@@ -47,9 +48,7 @@ public abstract class BaseController {
     }
 
     Response notFound() {
-        return this.response.redirect(this.router.build("@index/error", new String[][] {
-            new String[] {"code", "404"}
-        }));
+        return this.response.redirect(this.router.build("@index/error", new ParameterBag().add("code", 404)));
     }
 
     public Response getResponse(){

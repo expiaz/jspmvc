@@ -1,3 +1,4 @@
+<%@ page import="core.utils.ParameterBag" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <jsp:useBean id="router" class="core.http.Router" scope="request"/>
@@ -15,7 +16,7 @@
     }
 %>
 
-<form action="<%= router.build("student.edit", new String[][] { new String[] {"student", student.getId().toString() }}) %>" method="post">
+<form action="<%= router.build("student.edit", new ParameterBag().add("student", student.getId())) %>" method="post">
     <input type="text" name="nom" placeholder="Nom" value="${student.nom}">
     <br/>
     <input type="text" name="prenom" placeholder="Prénom" value="${student.prenom}">

@@ -50,6 +50,7 @@ public class FrontController extends HttpServlet {
         this.router = new Router(this.container);
         this.renderer = new Renderer(this.container);
 
+        this.renderer.addNamespace("base", "/WEB-INF/");
         this.renderer.addNamespace("layout", "@base/layout/");
         this.renderer.addNamespace("view", "@base/view/");
         this.renderer.addNamespace("shared", "@view/shared/");
@@ -64,6 +65,11 @@ public class FrontController extends HttpServlet {
         this.container.singleton(Renderer.class, this.renderer);
 
         for(Class controller : controllers) {
+
+            if(! controller.getName().endsWith("Controller")) {
+                throw new IllegalArgumentException(controller.getName() + " must ends with 'Controller'");
+            }
+
             String prefix = "";
             if(controller.isAnnotationPresent(Path.class)) {
                 prefix = ((Path) controller.getAnnotation(Path.class)).value();
@@ -118,6 +124,7 @@ public class FrontController extends HttpServlet {
             // globals
             request.setAttribute("router", this.router);
             request.setAttribute("renderer", this.renderer);
+            request.setAttribute("container", this.container);
 
             request.setAttribute("title", request.getPathInfo());
 
