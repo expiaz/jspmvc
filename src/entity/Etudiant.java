@@ -3,7 +3,7 @@ package entity;
 import javax.persistence.*;
 
 @Entity
-public class Etudiant implements BaseEntity {
+public class Etudiant extends BaseEntity {
 
     @Id
     @GeneratedValue
@@ -21,9 +21,7 @@ public class Etudiant implements BaseEntity {
     @ManyToOne
     private Groupe groupe;
 
-	public Etudiant(){
-
-	}
+	public Etudiant(){}
 	
 	public Etudiant(String nom, String prenom) {
 		this.prenom = prenom;
@@ -75,4 +73,5 @@ public class Etudiant implements BaseEntity {
             this.groupe.getEtudiants().add(this);
         }
     }
+
 }

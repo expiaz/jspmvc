@@ -8,14 +8,6 @@
 
 <h1>Modifier un étudiant</h1>
 
-<%
-    if(error.length() > 0) {
-%>
-<div class="error">${error}</div>
-<%
-    }
-%>
-
 <form action="<%= router.build("student.edit", new ParameterBag().add("student", student.getId())) %>" method="post">
     <input type="text" name="nom" placeholder="Nom" value="${student.nom}">
     <br/>

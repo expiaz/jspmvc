@@ -1,11 +1,13 @@
 package core.http;
 
+import core.utils.ParameterBag;
+
 public class Match {
 
     private Route route;
-    private String[] parameters;
+    private ParameterBag parameters;
 
-    public Match(Route route, String[] parameters) {
+    public Match(Route route, ParameterBag parameters) {
         this.route = route;
         this.parameters = parameters;
     }
@@ -14,7 +16,7 @@ public class Match {
         return route;
     }
 
-    public String[] getParameters() {
+    public ParameterBag getParameters() {
         return parameters;
     }
 }

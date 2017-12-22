@@ -33,16 +33,18 @@ public class Router {
     public Match match(Request request) {
 
         Matcher m;
+        List<RouteArgument> routeParameters;
 
         for(Route route : this.routes) {
             if(route.getMethod() == request.getMethod()) {
                 // match the url to the pattern, collect the groups and call method with requ resp and params
                 m = route.getPattern().matcher(request.getPath());
                 if(m.matches()) {
-                    String[] parameters = new String[route.getNumberOfExpectedParameters()];
+                    ParameterBag parameters = new ParameterBag();
+                    routeParameters = route.getParameters();
                     for(int i = 0; i < m.groupCount(); i++) {
                         // i + 1 to pass over the base group
-                        parameters[i] = m.group(i + 1);
+                        parameters.add(routeParameters.get(i).getName(), m.group(i + 1));
                     }
                     return new Match(route, parameters);
                 }
@@ -58,7 +60,7 @@ public class Router {
 
     public String build(String route, ParameterBag arguments) {
         if(! this.routesByName.containsKey(route)) {
-            throw new NoSuchElementException(route + "isn't a known route name");
+            throw new NoSuchElementException(route + " isn't a known route name");
         }
 
         Route r = this.routesByName.get(route);

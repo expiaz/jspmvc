@@ -1,4 +1,7 @@
-<%--
+<%@ page import="controller.BaseController" %>
+<%@ page import="core.utils.ParameterBag" %>
+<%@ page import="core.annotations.Parameter" %>
+<%@ page import="java.util.Map" %><%--
   Created by IntelliJ IDEA.
   User: gidonr
   Date: 24/11/17
@@ -47,21 +50,21 @@
 
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="<%= router.build("student.list") %>">Voir les étudiants</a>
-            </li>
-            <li>
-                <a class="nav-link" href="<%= router.build("student.add") %>">Ajouter un étudiant</a>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="dropdown-students" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Etudiants</a>
+                <div class="dropdown-menu" aria-labelledby="dropdown-students">
+                    <a class="dropdown-item" href="<%= router.build("student.list") %>">Voir les étudiants</a>
+                    <a class="dropdown-item" href="<%= router.build("student.add") %>">Ajouter un étudiant</a>
+                </div>
             </li>
 
-            <!--<li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
-                <div class="dropdown-menu" aria-labelledby="dropdown01">
-                    <a class="dropdown-item" href="#">Action</a>
-                    <a class="dropdown-item" href="#">Another action</a>
-                    <a class="dropdown-item" href="#">Something else here</a>
+            <%--<li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="dropdown-groups" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Groupes</a>
+                <div class="dropdown-menu" aria-labelledby="dropdown-groups">
+                    <a class="dropdown-item" href="<%= router.build("group.list") %>">Voir les groupes</a>
+                    <a class="dropdown-item" href="<%= router.build("group.add") %>">Ajouter un groupe</a>
                 </div>
-            </li>-->
+            </li>--%>
         </ul>
         <%--<form class="form-inline my-2 my-lg-0">
             <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
@@ -71,3 +74,14 @@
 </nav>
 
 <main class="container">
+
+    <%
+    ParameterBag flashBag = (ParameterBag) request.getAttribute(BaseController.FLASH_BAG);
+    for (Map.Entry<String, Object> entry : flashBag.entrySet()) {
+    %>
+    <div class="notification notification-<%= entry.getKey().toLowerCase() %>">
+        <%= entry.getValue() %>
+    </div>
+    <%
+    }
+    %>

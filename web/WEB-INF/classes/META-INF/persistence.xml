@@ -16,7 +16,7 @@
 
             <!-- JDBC connection properties -->
             <!--  en SqlLite, sur un fichier de votre arborescence (en windows c:/etc...) -->
-            <property name="javax.persistence.jdbc.url" value="jdbc:sqlite:/home/gidonr/Documents/cours/java/jee/projet-etudiants/web/WEB-INF/data/db"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:sqlite:/home/gidonr/Documents/cours/java/jee/symfonee/web/WEB-INF/data/db"/>
             <property name="javax.persistence.jdbc.user" value=""/>
             <!--property name="eclipselink.jdbc.password" value=""/-->
             <property name="javax.persistence.jdbc.driver" value="org.sqlite.JDBC"/>

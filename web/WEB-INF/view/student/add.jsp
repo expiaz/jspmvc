@@ -5,14 +5,6 @@
 
 <h1>Ajouter un étudiant</h1>
 
-<%
-    if(error.length() > 0) {
-%>
-    <div class="error">${error}</div>
-<%
-    }
-%>
-
 <form action="<%= router.build("student.add") %>" method="post">
     <input type="text" name="nom" placeholder="Nom">
     <br/>

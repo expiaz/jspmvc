@@ -18,12 +18,12 @@ public class IndexController extends BaseController {
     }
 
     @Route(name = "index.home")
-    public Response indexAction(Request request) {
+    public Response indexAction() {
         return this.render("@view/home");
     }
 
     @Route(name = "index.error", path = "/error/{code}")
-    public Response errorAction(Request request, @Parameter(mask = "\\d{3}", name = "code") String error) {
+    public Response errorAction(@Parameter(mask = "\\d{3}", name = "code") int error) {
         return this.render("@error/404",
                 new ParameterBag()
                     .add("code", error)

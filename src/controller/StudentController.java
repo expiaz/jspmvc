@@ -23,8 +23,8 @@ public class StudentController extends BaseController {
         this.dao = dao;
     }
 
-    @Route(name = "student.list", path = "/list")
-    public Response listAction(Request request) {
+    @Route(name = "student.list", path = "/all")
+    public Response listAction() {
             return this.render("@student/list",
                 new ParameterBag()
                     .add("students", dao.getAll())
@@ -32,10 +32,10 @@ public class StudentController extends BaseController {
     }
 
     @Route(name = "student.show", path = "/{student}")
-    public Response showAction(Request request, @Parameter(name = "student", mask = "\\d+") String id) {
+    public Response showAction(@Parameter(name = "student", mask = "\\d+") Etudiant student) {
         return this.render("@student/show",
                 new ParameterBag()
-                    .add("student", dao.getById(Integer.valueOf(id)))
+                    .add("student", student)
         );
     }
 
@@ -46,11 +46,11 @@ public class StudentController extends BaseController {
             String nom = request.getParameter("nom");
             String prenom = request.getParameter("prenom");
 
-            if(nom == null || prenom == null) {
-                return this.render("@student/add",
-                        new ParameterBag()
-                            .add("error", "Nom ou prénom invalide")
-                );
+            if (nom == null || prenom == null
+                || nom.length() == 0 || prenom.length() == 0
+            ) {
+                this.addError("Nom ou prénom invalide");
+                return this.render("@student/add");
             }
 
             Etudiant student = new Etudiant(nom, prenom);
@@ -59,39 +59,38 @@ public class StudentController extends BaseController {
             return this.redirectToRoute("student.show", new ParameterBag().add("student", student.getId()));
         }
 
-        return this.render("@student/add", new ParameterBag().add("error", ""));
+        return this.render("@student/add");
     }
 
     @Route(name = "student.edit", path = "/edit/{student}", methods = {HttpMethod.POST, HttpMethod.GET})
-    public Response editAction(Request request, @Parameter(name = "student", mask = "\\d+") String student) {
-
-        int id = Integer.valueOf(student);
-        Etudiant etudiant = this.dao.getById(id);
+    public Response editAction(Request request,
+                               @Parameter(name = "student", mask = "\\d+") Etudiant student) {
 
         if(request.isPost()) {
 
             String nom = request.getParameter("nom");
             String prenom = request.getParameter("prenom");
 
-            if(nom == null || prenom == null) {
+            if (nom == null || prenom == null
+                || nom.length() == 0 || prenom.length() == 0
+            ) {
+                this.addError("Nom ou prénom invalide");
                 return this.render("@student/edit",
                         new ParameterBag()
-                            .add("error", "Nom ou prénom invalide")
-                            .add("student", etudiant)
+                            .add("student", student)
                 );
             }
 
-            etudiant.setNom(nom);
-            etudiant.setPrenom(prenom);
-            this.dao.update(etudiant);
+            student.setNom(nom);
+            student.setPrenom(prenom);
+            this.dao.update(student);
 
-            return this.redirectToRoute("student.show", new ParameterBag().add("student", student));
+            return this.redirectToRoute("student.show", new ParameterBag().add("student", student.getId()));
         }
 
         return this.render("@student/edit",
                 new ParameterBag()
-                    .add("error", "")
-                    .add("student", etudiant)
+                    .add("student", student)
         );
     }
 

@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.util.List;
 
 @Entity
-public class Groupe implements BaseEntity {
+public class Groupe extends BaseEntity {
 
     @Id
     @GeneratedValue
@@ -20,9 +20,8 @@ public class Groupe implements BaseEntity {
 	public Groupe(){
 	}
 
-	public Groupe(String nom, List<Etudiant> etudiants) {
+	public Groupe(String nom) {
 		this.nom = nom;
-		this.etudiants = etudiants;
 	}
 
 	@Override

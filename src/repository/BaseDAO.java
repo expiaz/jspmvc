@@ -1,13 +1,14 @@
 package repository;
 
 import core.annotations.Inject;
+import core.utils.Fetcher;
 import entity.BaseEntity;
 
 import javax.persistence.EntityManager;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 
-public abstract class BaseDAO<T extends BaseEntity> {
+public abstract class BaseDAO<T extends BaseEntity> implements Fetcher<T> {
 
     private EntityManager em;
 
@@ -48,7 +49,7 @@ public abstract class BaseDAO<T extends BaseEntity> {
     public void remove(T upplet) {
         em.getTransaction().begin();
 
-        em.createQuery("DELETE FROM " + this.table + " t WHERE t.id = :id")
+        em.createQuery("DELETE FROM " + this.table + " t WHERE t.id = :id", this.entity)
                 .setParameter("id", upplet.getId())
                 .executeUpdate();
 
@@ -56,7 +57,11 @@ public abstract class BaseDAO<T extends BaseEntity> {
     }
 
     public List<T> getAll() {
-        return em.createQuery("SELECT t FROM " + this.table + " t").getResultList();
+        return em.createQuery("SELECT t FROM " + this.table + " t", this.entity).getResultList();
     }
 
+    @Override
+    public T fetch(Object value) {
+        return this.getById(Integer.valueOf((String) value));
+    }
 }

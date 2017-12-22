@@ -4,6 +4,7 @@ import core.http.Request;
 import core.http.Response;
 import core.http.Router;
 import core.annotations.Inject;
+import core.utils.NotificationType;
 import core.utils.ParameterBag;
 import core.utils.Renderer;
 
@@ -12,6 +13,8 @@ import java.util.Map;
 
 public abstract class BaseController {
 
+    public static final String FLASH_BAG = "__FLASH__";
+
     private Response response;
     private Request request;
 
@@ -19,6 +22,7 @@ public abstract class BaseController {
     Router router;
 
     ParameterBag context;
+    ParameterBag flashBag;
 
     public BaseController(@Inject Renderer renderer, @Inject Router router,
                              @Inject Request request, @Inject Response response) {
@@ -26,7 +30,9 @@ public abstract class BaseController {
         this.router = router;
         this.request = request;
         this.response = response;
+        this.flashBag = new ParameterBag();
         this.context = new ParameterBag();
+        this.context.add(FLASH_BAG, this.flashBag);
     }
 
     Response render(String viewPath, ParameterBag arguments) {
@@ -57,6 +63,23 @@ public abstract class BaseController {
 
     public Response getResponse(){
         return this.response;
+    }
+
+
+    public void addError(String message) {
+        this.addNotification(message, NotificationType.ERROR);
+    }
+
+    public void addMessage(String message) {
+        this.addNotification(message, NotificationType.MESSAGE);
+    }
+
+    public void addValidation(String message) {
+        this.addNotification(message, NotificationType.VALID);
+    }
+
+    public void addNotification(String message, NotificationType type) {
+        this.flashBag.add(type.name(), message);
     }
 
 }

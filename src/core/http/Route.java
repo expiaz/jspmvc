@@ -1,6 +1,7 @@
 package core.http;
 
 import core.annotations.Parameter;
+import core.utils.Filter;
 import core.utils.ParameterBag;
 
 import java.lang.reflect.Method;
@@ -8,6 +9,8 @@ import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static core.utils.Filter.*;
 
 public class Route {
 
@@ -39,7 +42,7 @@ public class Route {
         this.path = path;
 
         // extract arguments of the route method action
-        Map<String, String> methodArguments = new HashMap<>();
+        Map<String, Parameter> methodArguments = new HashMap<>();
         for(java.lang.reflect.Parameter p : action.getParameters()) {
             if(p.isAnnotationPresent(Parameter.class)) {
                 Parameter a = p.getAnnotation(Parameter.class);
@@ -47,14 +50,13 @@ public class Route {
                 /*if(aName.equals("__DEFAULT__")) {
                     aName = p.getName();
                 }*/
-                methodArguments.put(aName, a.mask());
+                methodArguments.put(aName, a);
             }
         }
 
         String pattern = path;
         RouteArgument rarg;
         int offset = 0;
-        String argRegexp;
         String argName;
 
         Matcher m = argumentsRegExp.matcher(path);
@@ -63,13 +65,13 @@ public class Route {
             if(! methodArguments.containsKey(argName)) {
                 throw new InvalidParameterException(controller.getName() + "::" + action.getName() + " parameter " + argName + " not found");
             }
-            argRegexp = methodArguments.get(argName);
-            rarg = new RouteArgument(argName, argRegexp, m.start(), m.end());
+            Parameter pArg = methodArguments.get(argName);
+            rarg = new RouteArgument(pArg, m.start(), m.end());
             this.arguments.add(rarg);
             // replace the {name} by (mask)
-            pattern = pattern.substring(offset, m.start()) + "(" + argRegexp + ")" + pattern.substring(m.end() - offset);
+            pattern = pattern.substring(offset, m.start()) + "(" + pArg.mask() + ")" + pattern.substring(m.end() - offset);
             // increment offset by the size of the missing characters (fullgroup - replaced group)
-            offset += m.end() - m.start() - argRegexp.length();
+            offset += m.end() - m.start() - pArg.mask().length();
         }
 
         if(methodArguments.size() != this.arguments.size()) {
@@ -79,15 +81,15 @@ public class Route {
         this.pattern = Pattern.compile(pattern);
     }
 
-    String build(ParameterBag arguments) {
+    public String build(ParameterBag arguments) {
         String path = this.path;
         int offset = 0;
 
         for(RouteArgument arg : this.arguments) {
             // replace the {name} by (mask)
-            path = path.substring(offset, arg.start) + arguments.get(arg.name).toString() + path.substring(arg.end - offset);
+            path = path.substring(offset, arg.getStart()) + arguments.get(arg.getName()).toString() + path.substring(arg.getEnd() - offset);
             // increment offset by the size of the missing characters (fullgroup - replaced group)
-            offset += arg.end - arg.start - arg.name.length();
+            offset += arg.getEnd() - arg.getStart() - arg.getName().length();
         }
 
         return path;
@@ -113,23 +115,9 @@ public class Route {
         return method;
     }
 
-    public int getNumberOfExpectedParameters(){
-        return this.arguments.size();
+    public List<RouteArgument> getParameters() {
+        return this.arguments;
     }
 
-    private class RouteArgument {
-
-        String name;
-        String mask;
-        int start;
-        int end;
-
-        RouteArgument(String name, String mask, int start, int end){
-            this.name = name;
-            this.mask = mask;
-            this.start = start;
-            this.end = end;
-        }
-    }
 }
 

@@ -20,6 +20,7 @@ public class Database {
 
     private Database() {
         this.emFactory = Persistence.createEntityManagerFactory(DBMS);
+        EntityManager em = this.emFactory.createEntityManager();
     }
 
     public EntityManager getEntityManager() {

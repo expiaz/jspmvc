@@ -65,7 +65,7 @@ public class Container {
                         }
                     });
                 } catch (Exception e) {
-                    throw new ClassNotFoundException(name + " isn't a known factory");
+                    throw new ClassNotFoundException(name + " isn't a known factory\n\n" + e.getMessage());
                 }
             }
 
@@ -82,7 +82,7 @@ public class Container {
                 try {
                     this.singleton(name, this.resolve(Class.forName(name)));
                 } catch (Exception e2) {
-                    throw new ClassNotFoundException(name + " isn't a known singleton");
+                    throw new ClassNotFoundException(name + " isn't a known singleton\n\n" + e2.getMessage());
                 }
             }
         }

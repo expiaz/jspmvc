@@ -2,12 +2,11 @@ package core;
 
 import controller.IndexController;
 import controller.StudentController;
-import core.annotations.PathPrefix;
-import core.annotations.Viewspace;
+import core.annotations.*;
+import core.annotations.Route;
 import core.database.Database;
 import core.http.*;
 import core.utils.*;
-import core.annotations.Route;
 
 import javax.persistence.EntityManager;
 import javax.servlet.ServletContext;
@@ -15,7 +14,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -93,12 +91,12 @@ public class FrontController extends HttpServlet {
                     if(!actionName.endsWith("Action")) {
                         throw new IllegalArgumentException(actionName + " must ends with 'Action'");
                     }
-                    if(action.getParameterCount() < 1) {
+/*                    if(action.getParameterCount() < 1) {
                         throw new IllegalArgumentException(actionName + " must have at least 1 parameter : Request");
                     }
                     if(action.getParameters()[0].getType() != Request.class) {
                         throw new IllegalArgumentException(" first parameter of " + actionName + " must be Request");
-                    }
+                    }*/
                     if(action.getReturnType() != Response.class) {
                         throw new IllegalArgumentException(actionName + " must return a Response, " + action.getReturnType().getName() + " returned");
                     }
@@ -161,7 +159,7 @@ public class FrontController extends HttpServlet {
             // dispatch control to view
             Match m = this.router.match(realRequest);
             if(m == null) { // no route found
-                m = new Match(defaultRoute, new String[]{"404"});
+                m = new Match(defaultRoute, new ParameterBag().add("code", "404"));
             }
             this.dispatch(realRequest, realResponse, m);
 
@@ -174,25 +172,57 @@ public class FrontController extends HttpServlet {
             throws InvocationTargetException, IllegalAccessException, NoSuchMethodException,
             InstantiationException, ServletException, IOException, ClassNotFoundException {
 
+        Class v = Class.forName("org.sqlite.JDBC");
+
         /*Constructor<?> constructor = match.getRoute().getController().getDeclaredConstructor(Renderer.class, Router.class, HttpServletRequest.class);
         Object controller = constructor.newInstance(renderer, router, request);*/
         Object controller = this.container.resolve(match.getRoute().getController());
         Method action = match.getRoute().getAction();
 
-        int numberParameters = 1 + match.getParameters().length;
+        /*int numberParameters = 1 + match.getParameters().length;
         if(action.getParameterCount() != numberParameters) {
             throw new IllegalArgumentException(
                     action.getName() +
                             " must have the exact same number of parameters as declared in route path" +
                             "\nexpected " + numberParameters + " got " + action.getParameterCount()
             );
-        }
+        }*/
 
-        Object[] parameters = new Object[numberParameters];
-        parameters[0] = request;
+        Object[] parameters = new Object[action.getParameterCount()];
         int i = 0;
-        for (String p : match.getParameters()) {
-            parameters[++i] = p;
+        for(java.lang.reflect.Parameter p : action.getParameters()) {
+            if (p.isAnnotationPresent(Parameter.class)) {
+                Parameter pannotation = (Parameter) p.getAnnotation(Parameter.class);
+
+                Class parameterClass = p.getType();
+                Fetchable fetchable;
+                Fetcher fetcher;
+                Object param;
+
+                if(parameterClass.isAnnotationPresent(Fetchable.class)) {
+                    fetchable = (Fetchable) parameterClass.getAnnotation(Fetchable.class);
+                    fetcher = (Fetcher) this.container.get(fetchable.from());
+                    param = fetcher.fetch(match.getParameters().get(pannotation.name()));
+                } else if(Resolver.isInterfacePresent(Fetchable.class, parameterClass)) {
+                    fetchable = (Fetchable) parameterClass.newInstance();
+                    fetcher = (Fetcher) this.container.get(fetchable.from());
+                    param = fetcher.fetch(match.getParameters().get(pannotation.name()));
+                } else {
+                    param = match.getParameters().get(pannotation.name());
+                }
+
+                parameters[i++] = param;
+            } else if (p.isAnnotationPresent(Inject.class)) {
+                Inject pinject = p.getAnnotation(Inject.class);
+                parameters[i++] = this.container.get(
+                        pinject.key().equals("__DEFAULT__")
+                                ? p.getType().getName()
+                                : pinject.key(),
+                        pinject.factory()
+                );
+            } else {
+                parameters[i++] = this.container.get(p.getType().getName());
+            }
         }
 
         Response res = (Response) action.invoke(controller, parameters);
