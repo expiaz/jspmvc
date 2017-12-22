@@ -1,2 +1,2 @@
-#Symfonee
-_the javaEE symfony based framework for lazy php developpers_
+# Symfonee
+_The javaEE symfony based framework for lazy php developpers_
