@@ -1,6 +1,6 @@
 package controller;
 
-import core.annotations.Argument;
+import core.annotations.Parameter;
 import core.annotations.Inject;
 import core.annotations.Route;
 
@@ -23,7 +23,7 @@ public class IndexController extends BaseController {
     }
 
     @Route(name = "index.error", path = "/error/{code}")
-    public Response errorAction(Request request, @Argument(mask = "\\d{3}", name = "code") String error) {
+    public Response errorAction(Request request, @Parameter(mask = "\\d{3}", name = "code") String error) {
         return this.render("@error/404",
                 new ParameterBag()
                     .add("code", error)

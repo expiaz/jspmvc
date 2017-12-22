@@ -8,30 +8,34 @@ import core.http.Router;
 import core.utils.ParameterBag;
 import core.utils.Renderer;
 import entity.Etudiant;
-import factory.GestionFactory;
+import repository.EtudiantDAO;
 
-@Path("/student")
+@PathPrefix("/student")
 @Viewspace(namespace = "student", path = "@view/student/")
 public class StudentController extends BaseController {
 
+    private EtudiantDAO dao;
+
     public StudentController(@Inject Renderer renderer, @Inject Router router,
-                      @Inject Request request, @Inject Response response) {
+                             @Inject Request request, @Inject Response response,
+                             @Inject EtudiantDAO dao) {
         super(renderer, router, request, response);
+        this.dao = dao;
     }
 
     @Route(name = "student.list", path = "/list")
     public Response listAction(Request request) {
-        return this.render("@student/list",
+            return this.render("@student/list",
                 new ParameterBag()
-                    .add("students", GestionFactory.getEtudiants())
+                    .add("students", dao.getAll())
         );
     }
 
     @Route(name = "student.show", path = "/{student}")
-    public Response showAction(Request request, @Argument(name = "student", mask = "\\d+") String id) {
+    public Response showAction(Request request, @Parameter(name = "student", mask = "\\d+") String id) {
         return this.render("@student/show",
                 new ParameterBag()
-                    .add("student", GestionFactory.getEtudiantById(Integer.valueOf(id)))
+                    .add("student", dao.getById(Integer.valueOf(id)))
         );
     }
 
@@ -45,29 +49,24 @@ public class StudentController extends BaseController {
             if(nom == null || prenom == null) {
                 return this.render("@student/add",
                         new ParameterBag()
-                                .add("error", "Nom ou prénom invalide")
+                            .add("error", "Nom ou prénom invalide")
                 );
             }
 
-            Etudiant e = GestionFactory.create(nom, prenom);
-            GestionFactory.save(e);
+            Etudiant student = new Etudiant(nom, prenom);
+            this.dao.insert(student);
 
-            return this.redirect(this.router.build("student.show", new ParameterBag().add("student", e.getId())));
+            return this.redirectToRoute("student.show", new ParameterBag().add("student", student.getId()));
         }
 
         return this.render("@student/add", new ParameterBag().add("error", ""));
     }
 
     @Route(name = "student.edit", path = "/edit/{student}", methods = {HttpMethod.POST, HttpMethod.GET})
-    public Response editAction(Request request, @Argument(name = "student", mask = "\\d+") String student) {
+    public Response editAction(Request request, @Parameter(name = "student", mask = "\\d+") String student) {
 
-        Etudiant e;
-        try {
-            int id = Integer.valueOf(student);
-            e = GestionFactory.getEtudiantById(id);
-        } catch (Exception ex) {
-            return this.notFound();
-        }
+        int id = Integer.valueOf(student);
+        Etudiant etudiant = this.dao.getById(id);
 
         if(request.isPost()) {
 
@@ -78,20 +77,21 @@ public class StudentController extends BaseController {
                 return this.render("@student/edit",
                         new ParameterBag()
                             .add("error", "Nom ou prénom invalide")
+                            .add("student", etudiant)
                 );
             }
 
-            e.setNom(nom);
-            e.setPrenom(prenom);
-            GestionFactory.save(e);
+            etudiant.setNom(nom);
+            etudiant.setPrenom(prenom);
+            this.dao.update(etudiant);
 
-            return this.redirect(this.router.build("student.show", new ParameterBag().add("student", student)));
+            return this.redirectToRoute("student.show", new ParameterBag().add("student", student));
         }
 
         return this.render("@student/edit",
                 new ParameterBag()
                     .add("error", "")
-                    .add("student", e)
+                    .add("student", etudiant)
         );
     }
 

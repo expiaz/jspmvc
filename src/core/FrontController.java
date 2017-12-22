@@ -2,17 +2,20 @@ package core;
 
 import controller.IndexController;
 import controller.StudentController;
-import core.annotations.Path;
+import core.annotations.PathPrefix;
 import core.annotations.Viewspace;
+import core.database.Database;
 import core.http.*;
 import core.utils.*;
 import core.annotations.Route;
 
+import javax.persistence.EntityManager;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -42,6 +45,7 @@ public class FrontController extends HttpServlet {
     private Router router;
     private Renderer renderer;
     private Container container;
+    private Database database;
 
     @Override
     public void init() throws ServletException {
@@ -49,10 +53,11 @@ public class FrontController extends HttpServlet {
         this.container = new Container();
         this.router = new Router(this.container);
         this.renderer = new Renderer(this.container);
+        this.database = Database.getInstance();
 
-        this.renderer.addNamespace("base", "/WEB-INF/");
-        this.renderer.addNamespace("layout", "@base/layout/");
-        this.renderer.addNamespace("view", "@base/view/");
+        this.renderer.addNamespace("webinf", "/WEB-INF/");
+        this.renderer.addNamespace("view", "@webinf/view/");
+        this.renderer.addNamespace("layout", "@view/layout/");
         this.renderer.addNamespace("shared", "@view/shared/");
         this.renderer.addNamespace("error", "@view/error/");
 
@@ -61,8 +66,15 @@ public class FrontController extends HttpServlet {
         this.renderer.addNamespace("js", "@assets/js/");
         this.renderer.addNamespace("img", "@assets/img/");
 
-        this.container.singleton(Router.class, this.router);
-        this.container.singleton(Renderer.class, this.renderer);
+        this.container.global(this.router);
+        this.container.global(this.renderer);
+        this.container.global(this.database);
+        this.container.factory(EntityManager.class, new Factory() {
+            @Override
+            public Object create(Container container) {
+                return ((Database) container.get(Database.class)).getEntityManager();
+            }
+        });
 
         for(Class controller : controllers) {
 
@@ -71,8 +83,8 @@ public class FrontController extends HttpServlet {
             }
 
             String prefix = "";
-            if(controller.isAnnotationPresent(Path.class)) {
-                prefix = ((Path) controller.getAnnotation(Path.class)).value();
+            if(controller.isAnnotationPresent(PathPrefix.class)) {
+                prefix = ((PathPrefix) controller.getAnnotation(PathPrefix.class)).value();
             }
 
             for(Method action : controller.getMethods()) {
@@ -83,6 +95,12 @@ public class FrontController extends HttpServlet {
                     }
                     if(action.getParameterCount() < 1) {
                         throw new IllegalArgumentException(actionName + " must have at least 1 parameter : Request");
+                    }
+                    if(action.getParameters()[0].getType() != Request.class) {
+                        throw new IllegalArgumentException(" first parameter of " + actionName + " must be Request");
+                    }
+                    if(action.getReturnType() != Response.class) {
+                        throw new IllegalArgumentException(actionName + " must return a Response, " + action.getReturnType().getName() + " returned");
                     }
 
                     Route annotation = action.getAnnotation(Route.class);
@@ -103,6 +121,12 @@ public class FrontController extends HttpServlet {
         }
 
         this.router.setup();
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        this.database.destroy();
     }
 
     /** Processes requests for both HTTP

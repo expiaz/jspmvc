@@ -36,6 +36,10 @@ public class Container {
         this.singleton(clazz.getName(), o);
     }
 
+    public void global(Object o) {
+        this.singleton(o.getClass(), o);
+    }
+
     public Object get(Class clazz) {
         try {
             return this.get(clazz.getName());
@@ -65,13 +69,16 @@ public class Container {
                 }
             }
 
-            return this.factories.get(factory).create(this);
+            Factory f = this.factories.get(name);
+            Object o = f.create(this);
+            return o;
         }
 
         if (!this.singletons.containsKey(name)) {
-            try {
-                this.singleton(name, this.get(name, true));
-            } catch (ClassNotFoundException e) {
+
+            if(this.factories.containsKey(name)) {
+               this.singleton(name, this.get(name, true));
+            } else {
                 try {
                     this.singleton(name, this.resolve(Class.forName(name)));
                 } catch (Exception e2) {

@@ -1,7 +1,5 @@
 package core.http;
 
-import java.util.List;
-
 public class Match {
 
     private Route route;

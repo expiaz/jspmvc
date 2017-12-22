@@ -1,10 +1,9 @@
 package core.http;
 
-import core.annotations.Argument;
+import core.annotations.Parameter;
 import core.utils.ParameterBag;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -41,9 +40,9 @@ public class Route {
 
         // extract arguments of the route method action
         Map<String, String> methodArguments = new HashMap<>();
-        for(Parameter p : action.getParameters()) {
-            if(p.isAnnotationPresent(Argument.class)) {
-                Argument a = p.getAnnotation(Argument.class);
+        for(java.lang.reflect.Parameter p : action.getParameters()) {
+            if(p.isAnnotationPresent(Parameter.class)) {
+                Parameter a = p.getAnnotation(Parameter.class);
                 String aName = a.name();
                 /*if(aName.equals("__DEFAULT__")) {
                     aName = p.getName();
