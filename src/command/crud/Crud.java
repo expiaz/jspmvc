@@ -91,12 +91,12 @@ public class Crud implements Command {
             int fileSeparator = gen.getAbsolutePath().lastIndexOf("/");
             String directories = gen.getAbsolutePath().substring(0, fileSeparator);
 
-            System.out.println("Crud : Generating " + entry.getValue() + " ...");
+            System.out.print("Crud : Generating " + entry.getValue() + " ... ");
             // creation des repertoires parents du nouveau fichier
             Files.createDirectories(Paths.get(directories));
             // creation et ecriture du fichier
             Files.write(file, this.replace(stub.toString()), Charset.forName("UTF-8"));
-            System.out.println("Crud : Done.");
+            System.out.println("Done.");
         }
         System.out.println("Crud : Finished generating files.");
     }
