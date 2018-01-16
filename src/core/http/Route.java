@@ -69,9 +69,9 @@ public class Route {
             rarg = new RouteArgument(pArg, m.start(), m.end());
             this.arguments.add(rarg);
             // replace the {name} by (mask)
-            pattern = pattern.substring(offset, m.start()) + "(" + pArg.mask() + ")" + pattern.substring(m.end() - offset);
+            pattern = pattern.substring(0, m.start() - offset) + "(" + pArg.mask() + ")" + pattern.substring(m.end() - offset);
             // increment offset by the size of the missing characters (fullgroup - replaced group)
-            offset += m.end() - m.start() - pArg.mask().length();
+            offset += m.group(0).length() - (pArg.mask().length() + 2) /* for '(' and ')' */;
         }
 
         if(methodArguments.size() != this.arguments.size()) {

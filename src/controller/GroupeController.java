@@ -25,7 +25,7 @@ public class GroupeController extends BaseController{
     }
 
     @Route(name = "group.list", path = "/all")
-    public Response listAction(Request request) {
+    public Response listAction() {
         return this.render("@group/list",
                 new ParameterBag()
                     .add("groups", dao.getAll())
@@ -61,10 +61,7 @@ public class GroupeController extends BaseController{
     }
 
     @Route(name = "group.edit", path = "/edit/{group}", methods = {HttpMethod.POST, HttpMethod.GET})
-    public Response editAction(Request request, @Parameter(name = "group", mask = "\\d+") int group) {
-
-        int id = Integer.valueOf(group);
-        Groupe groupe = this.dao.getById(id);
+    public Response editAction(Request request, @Parameter(name = "group", mask = "\\d+") Groupe groupe) {
 
         if(request.isPost()) {
             String nom = request.getParameter("nom");
@@ -79,7 +76,7 @@ public class GroupeController extends BaseController{
             groupe.setNom(nom);
             this.dao.update(groupe);
 
-            return this.redirectToRoute("group.show", new ParameterBag().add("group", groupe));
+            return this.redirectToRoute("group.show", new ParameterBag().add("group", groupe.getId()));
         }
 
         return this.render("@student/edit",

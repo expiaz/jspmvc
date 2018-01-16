@@ -1,0 +1,92 @@
+package controller;
+
+import core.annotations.*;
+import core.http.HttpMethod;
+import core.http.Request;
+import core.http.Response;
+import core.http.Router;
+import core.utils.ParameterBag;
+import core.utils.Renderer;
+
+import entity.$$className$$;
+import repository.$$className$$DAO;
+
+@PathPrefix("/$$lowerCaseClassName$$")
+@Viewspace(namespace = "$$lowerCaseClassName$$", path = "@view/$$lowerCaseClassName$$/")
+public class $$className$$Controller extends BaseController {
+
+    private $$className$$DAO dao;
+
+    public $$className$$Controller(@Inject Renderer renderer, @Inject Router router,
+                             @Inject Request request, @Inject Response response,
+                             @Inject $$className$$DAO dao) {
+        super(renderer, router, request, response);
+        this.dao = dao;
+    }
+
+    @Route(name = "$$lowerCaseClassName$$.list", path = "/all")
+    public Response listAction() {
+            return this.render("@$$lowerCaseClassName$$/list",
+                new ParameterBag()
+                    .add("$$lowerCaseClassName$$s", dao.getAll())
+        );
+    }
+
+    @Route(name = "$$lowerCaseClassName$$.show", path = "/{$$lowerCaseClassName$$}")
+    public Response showAction(@Parameter(name = "$$lowerCaseClassName$$", mask = "\\d+") $$className$$ $$lowerCaseClassName$$) {
+        return this.render("@$$lowerCaseClassName$$/show",
+                new ParameterBag()
+                    .add("$$lowerCaseClassName$$", $$lowerCaseClassName$$)
+        );
+    }
+
+    @Route(name = "$$lowerCaseClassName$$.add", path = "/add", methods = {HttpMethod.POST, HttpMethod.GET})
+    public Response addAction(Request request) {
+
+        if(request.isPost()) {
+            String param = request.getParameter("param");
+
+            if (param == null) {
+                this.addError("Champs invalide");
+                return this.render("@$$lowerCaseClassName$$/add");
+            }
+
+            $$className$$ $$lowerCaseClassName$$ = new $$className$$(/* fields */);
+            this.dao.insert($$lowerCaseClassName$$);
+
+            return this.redirectToRoute("$$lowerCaseClassName$$.show",
+                new ParameterBag().add("$$lowerCaseClassName$$", $$lowerCaseClassName$$.getId())
+            );
+        }
+
+        return this.render("@$$lowerCaseClassName$$/add");
+    }
+
+    @Route(name = "$$lowerCaseClassName$$.edit", path = "/edit/{$$lowerCaseClassName$$}", methods = {HttpMethod.POST, HttpMethod.GET})
+    public Response editAction(Request request,
+                               @Parameter(name = "$$lowerCaseClassName$$", mask = "\\d+") $$className$$ $$lowerCaseClassName$$) {
+
+        if(request.isPost()) {
+            String param = request.getParameter("param");
+
+            if (param == null) {
+                this.addError("Champs invalide");
+                return this.render("@$$lowerCaseClassName$$/edit",
+                    new ParameterBag().add("$$lowerCaseClassName$$", $$lowerCaseClassName$$)
+                );
+            }
+
+            // $$lowerCaseClassName$$.setXX(param);
+            this.dao.update($$lowerCaseClassName$$);
+
+            return this.redirectToRoute("$$lowerCaseClassName$$.show",
+                new ParameterBag().add("$$lowerCaseClassName$$", $$lowerCaseClassName$$.getId())
+            );
+        }
+
+        return this.render("@$$lowerCaseClassName$$/edit",
+            new ParameterBag().add("$$lowerCaseClassName$$", $$lowerCaseClassName$$)
+        );
+    }
+
+}

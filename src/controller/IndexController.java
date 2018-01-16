@@ -23,7 +23,7 @@ public class IndexController extends BaseController {
     }
 
     @Route(name = "index.error", path = "/error/{code}")
-    public Response errorAction(@Parameter(mask = "\\d{3}", name = "code") int error) {
+    public Response errorAction(@Parameter(mask = "\\d{3}", name = "code") Integer error) {
         return this.render("@error/404",
                 new ParameterBag()
                     .add("code", error)

@@ -1,0 +1,14 @@
+package repository;
+
+import core.annotations.Inject;
+import entity.$$className$$;
+
+import javax.persistence.EntityManager;
+
+public class $$className$$DAO extends BaseDAO<$$className$$> {
+
+    public $$className$$DAO(@Inject EntityManager em) {
+        super(em);
+    }
+
+}

@@ -1,5 +1,6 @@
 package core;
 
+import controller.GroupeController;
 import controller.IndexController;
 import controller.StudentController;
 import core.annotations.*;
@@ -22,7 +23,8 @@ public class FrontController extends HttpServlet {
 
     private static Class[] controllers = new Class[]{
         IndexController.class,
-        StudentController.class
+        StudentController.class,
+        GroupeController.class
     };
 
     private static core.http.Route defaultRoute;
@@ -32,7 +34,7 @@ public class FrontController extends HttpServlet {
                 "default",
                 "{code}",
                 IndexController.class,
-                IndexController.class.getMethod("errorAction", Request.class, String.class),
+                IndexController.class.getMethod("errorAction", Integer.class),
                 HttpMethod.GET
             );
         } catch (NoSuchMethodException e) {
