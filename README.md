@@ -7,3 +7,139 @@ _The javaEE symfony based framework for lazy php developpers_
 Command | Parameters | Description
 --------|------------|------------
 _crud_ | className | generate CRUD files for className entity
+
+## Provided abstraction
+_The API is quite the same as javax.ws.rs_
+
+Below is the syntax for a Controller, a DAO and an Entity
+
+### Controller
+```java
+@PathPrefix("/demo")
+@Viewspace(namespace = "@demo", path = "@view/demo/")
+public class DemoController extends BaseController{
+    
+    private DemoDao dao;
+    
+    public StudentController(@Inject Renderer renderer, @Inject Router router,
+                         @Inject Request request, @Inject Response response,
+                         @Inject EtudiantDAO dao) {
+        super(renderer, router, request, response);
+        this.dao = dao;
+    }
+    
+    @Route(name = "demo.index", path = "/")
+    public Response indexAction() {
+        return this.render("@demo/index",
+            new ParameterBag()
+                .add("message", "Hi there")
+        );
+    }
+    
+    @Route(name = "demo.list", path = "/all")
+    public Response listAction() {
+        return this.render("@demo/all",
+            new ParameterBag()
+                .add("demos", this.dao.getAll())
+        );
+    }
+    
+    @Route(name = "demo.show", path = "/{demo}")
+    public Response showAction(
+        @Parameter(name = "demo", mask = "\\d+") Demo demo
+    ) {
+        return this.render("@demo/show",
+            new ParameterBag()
+                .add("demo", demo)
+        );
+    }
+    
+    @Route(name = "demo.edit", path = "/edit/{demo}", methods = {HttpMethod.POST, HttpMethod.GET})
+    public Response editAction(
+        Request request,
+        @Parameter(name = "demo", mask = "\\d+") Demo demo
+    ) {
+
+        if(request.isPost()) {
+            String name = request.getParameter("name");
+    
+            if (nom == null || nom.length() == 0) {
+                this.addError("Invalid name");
+                return this.render("@demo/edit",
+                    new ParameterBag()
+                        .add("demo", demo)
+                );
+            }
+    
+            demo.setName(name);
+            this.dao.update(demo);
+    
+            return this.redirectToRoute("demo.show", 
+                new ParameterBag()
+                    .add("demo", demo.getId())
+            );
+        }
+        
+        return this.render("@demo/edit",
+            new ParameterBag()
+                .add("demo", demo)
+        );
+    }
+    
+    @Route(name = "demo.redirect", path = "redirect")
+    public Response redirectAction(Request request) {
+        this.redirectToRoute("demo.show", new ParameterBag().add("student", student.getId()));
+    }
+    
+}
+```
+
+### DAO
+```java
+public class DemoDAO extends BaseDAO<Demo> {
+
+    public DemoDAO(@Inject EntityManager em) {
+        super(em);
+    }
+
+}
+```
+
+### Entity
+```java
+@Entity
+public class Demo extends BaseEntity {
+
+    @Id
+    @GeneratedValue
+	private Integer id;
+
+    @Column(nullable = false)
+	private String name;
+    
+    public Demo() {}
+    
+    public Demo(String name) {
+        this.name = name;
+    }
+    
+    @Override
+    public int getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(Integer id) {
+        this.id = id;
+    }
+    
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+}
+```
