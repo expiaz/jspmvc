@@ -88,7 +88,7 @@ public class DemoController extends BaseController{
     
     @Route(name = "demo.redirect", path = "redirect")
     public Response redirectAction(Request request) {
-        this.redirectToRoute("demo.show", new ParameterBag().add("student", student.getId()));
+        this.redirectToRoute("demo.index");
     }
     
 }
