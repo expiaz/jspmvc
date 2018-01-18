@@ -1,6 +1,7 @@
 package repository;
 
 import core.annotations.Inject;
+import core.utils.Fetchable;
 import core.utils.Fetcher;
 import entity.BaseEntity;
 
@@ -62,6 +63,10 @@ public abstract class BaseDAO<T extends BaseEntity> implements Fetcher<T> {
 
     @Override
     public T fetch(Object value) {
-        return this.getById(Integer.valueOf((String) value));
+        try {
+            return this.getById(Integer.valueOf((String) value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

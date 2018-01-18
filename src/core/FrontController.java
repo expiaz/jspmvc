@@ -18,8 +18,15 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.InvalidParameterException;
 
 public class FrontController extends HttpServlet {
+
+    public static void die(Class from, Exception why) {
+        System.out.println("\nFrontController::die : unrecoverable error from " + from.getClass().getName() + "\n" + why.getMessage());
+        why.printStackTrace();
+        System.exit(1);
+    }
 
     private static Class[] controllers = new Class[]{
         IndexController.class,
@@ -38,7 +45,7 @@ public class FrontController extends HttpServlet {
                 HttpMethod.GET
             );
         } catch (NoSuchMethodException e) {
-            e.printStackTrace();
+            FrontController.die(FrontController.class, e);
         }
     }
 
@@ -69,9 +76,9 @@ public class FrontController extends HttpServlet {
         this.container.global(this.router);
         this.container.global(this.renderer);
         this.container.global(this.database);
-        this.container.factory(EntityManager.class, new Factory() {
+        this.container.factory(EntityManager.class, new Factory<EntityManager>() {
             @Override
-            public Object create(Container container) {
+            public EntityManager create(Container container) {
                 return ((Database) container.get(Database.class)).getEntityManager();
             }
         });
@@ -79,7 +86,7 @@ public class FrontController extends HttpServlet {
         for(Class controller : controllers) {
 
             if(! controller.getName().endsWith("Controller")) {
-                throw new IllegalArgumentException(controller.getName() + " must ends with 'Controller'");
+                FrontController.die(FrontController.class, new IllegalArgumentException(controller.getName() + " must ends with 'Controller'"));
             }
 
             String prefix = "";
@@ -90,17 +97,12 @@ public class FrontController extends HttpServlet {
             for(Method action : controller.getMethods()) {
                 if(action.isAnnotationPresent(Route.class)) {
                     String actionName = action.getName();
+
                     if(!actionName.endsWith("Action")) {
-                        throw new IllegalArgumentException(actionName + " must ends with 'Action'");
+                        FrontController.die(FrontController.class, new IllegalArgumentException(actionName + " must ends with 'Action'"));
                     }
-/*                    if(action.getParameterCount() < 1) {
-                        throw new IllegalArgumentException(actionName + " must have at least 1 parameter : Request");
-                    }
-                    if(action.getParameters()[0].getType() != Request.class) {
-                        throw new IllegalArgumentException(" first parameter of " + actionName + " must be Request");
-                    }*/
                     if(action.getReturnType() != Response.class) {
-                        throw new IllegalArgumentException(actionName + " must return a Response, " + action.getReturnType().getName() + " returned");
+                        FrontController.die(FrontController.class, new IllegalArgumentException(actionName + " must return a Response, " + action.getReturnType().getName() + " returned"));
                     }
 
                     Route annotation = action.getAnnotation(Route.class);
@@ -120,6 +122,7 @@ public class FrontController extends HttpServlet {
             }
         }
 
+        // sort routes for matching
         this.router.setup();
     }
 
@@ -174,68 +177,72 @@ public class FrontController extends HttpServlet {
             throws InvocationTargetException, IllegalAccessException, NoSuchMethodException,
             InstantiationException, ServletException, IOException, ClassNotFoundException {
 
-        Class v = Class.forName("org.sqlite.JDBC");
-
-        /*Constructor<?> constructor = match.getRoute().getController().getDeclaredConstructor(Renderer.class, Router.class, HttpServletRequest.class);
-        Object controller = constructor.newInstance(renderer, router, request);*/
+        // resolve the controller with the Container Resolver's
         Object controller = this.container.resolve(match.getRoute().getController());
+        // parse the action arguments
         Method action = match.getRoute().getAction();
 
-        /*int numberParameters = 1 + match.getParameters().length;
-        if(action.getParameterCount() != numberParameters) {
-            throw new IllegalArgumentException(
-                    action.getName() +
-                            " must have the exact same number of parameters as declared in route path" +
-                            "\nexpected " + numberParameters + " got " + action.getParameterCount()
-            );
-        }*/
-
+        // retrieve parameters
         Object[] parameters = new Object[action.getParameterCount()];
         int i = 0;
         for(java.lang.reflect.Parameter p : action.getParameters()) {
-            if (p.isAnnotationPresent(Parameter.class)) {
-                Parameter pannotation = (Parameter) p.getAnnotation(Parameter.class);
-
+            if (p.isAnnotationPresent(Parameter.class)) { // annotation found for the specified parameter
+                Parameter pannotation;
                 Class parameterClass = p.getType();
-                Fetchable fetchable;
-                Fetcher fetcher;
-                Object param;
+                Object rawParam, param;
 
-                if(parameterClass.isAnnotationPresent(Fetchable.class)) {
-                    fetchable = (Fetchable) parameterClass.getAnnotation(Fetchable.class);
-                    fetcher = (Fetcher) this.container.get(fetchable.from());
-                    param = fetcher.fetch(match.getParameters().get(pannotation.name()));
-                } else if(Resolver.isInterfacePresent(Fetchable.class, parameterClass)) {
-                    fetchable = (Fetchable) parameterClass.newInstance();
-                    fetcher = (Fetcher) this.container.get(fetchable.from());
-                    param = fetcher.fetch(match.getParameters().get(pannotation.name()));
-                } else {
+                pannotation = p.getAnnotation(Parameter.class);
+                rawParam = match.getParameters().get(pannotation.name());
+
+                // is fetchable present on the parameter type ? (it define the strategy to retrieve the given parameter)
+                if(Resolver.isInterfacePresent(Fetchable.class, parameterClass)) { // Fetchable present
+                    Fetchable fetchable = (Fetchable) parameterClass.newInstance();
+                    Fetcher fetcher = (Fetcher) this.container.get(fetchable.from());
+                    param = fetcher.fetch(rawParam);
+                    if(param == null) {
+                        FrontController.die(
+                            FrontController.class,
+                            new InvalidParameterException(
+                                "can't dispatch to action " + controller.getClass().getName() + "::" +
+                                action.getName() + " parameter " + pannotation.name() + " with provided value of " + rawParam +
+                                "for type " + parameterClass.getName()
+                            )
+                        );
+                    }
+                } else { // no fetching strategy provided, just retrieve it from the raw matched ones and cast it
                     param = match.getParameters().get(pannotation.name());
                 }
-
+                // add it to the list
                 parameters[i++] = param;
-            } else if (p.isAnnotationPresent(Inject.class)) {
+            } else if (p.isAnnotationPresent(Inject.class)) { // Dependency injection asked
+                // get details for DI
                 Inject pinject = p.getAnnotation(Inject.class);
+                // DI the parameter and add it to the list
                 parameters[i++] = this.container.get(
-                        pinject.key().equals("__DEFAULT__")
-                                ? p.getType().getName()
-                                : pinject.key(),
-                        pinject.factory()
+                    pinject.key().equals("__DEFAULT__")
+                            ? p.getType().getName()
+                            : pinject.key(),
+                    pinject.factory()
                 );
-            } else {
+            } else { // nothing found, try to resolve the type with the container (it'll surely fail)
                 parameters[i++] = this.container.get(p.getType().getName());
             }
         }
 
+        // IOC and get response
         Response res = (Response) action.invoke(controller, parameters);
 
+        // switch over response type to handle it correctly, either print or redirection
         if(res.isView()) { // print
+            // layout
             getServletContext().getRequestDispatcher(this.renderer.render("@layout/header"))
-                    .include(request.getRequest(), response.getResponse());
+                .include(request.getRequest(), response.getResponse());
+            // view
             getServletContext().getRequestDispatcher(response.getDestination())
-                    .include(request.getRequest(), response.getResponse());
+                .include(request.getRequest(), response.getResponse());
+            // layout
             getServletContext().getRequestDispatcher(this.renderer.render("@layout/footer"))
-                    .include(request.getRequest(), response.getResponse());
+                .include(request.getRequest(), response.getResponse());
         } else {  // redirect
             response.getResponse().sendRedirect(response.getDestination());
         }
@@ -250,8 +257,7 @@ public class FrontController extends HttpServlet {
 
     /** Returns a short description of the servlet */
     public String getServletInfo() {
-        return "Front Controller Pattern" +
-                " Servlet Front Strategy Example";
+        return "Front Controller Pattern Servlet Front Strategy Example";
     }
 
 

@@ -1,5 +1,8 @@
 package command;
 
+/**
+ * Minimal requirements to provide a command on the CLI
+ */
 public class CommandRequirements {
 
     private String name;

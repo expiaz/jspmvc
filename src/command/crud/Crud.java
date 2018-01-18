@@ -18,22 +18,31 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Represents CRUD Command
+ */
 public class Crud implements Command {
 
+    private static Pattern regexClazzName;
+    private static Pattern regexVariables;
+
+    static {
+        regexClazzName = Pattern.compile("^[a-zA-Z]\\w+$");
+        regexVariables = Pattern.compile("\\$\\$(\\w+)\\$\\$");
+    }
+
     public void execute(String[] args) {
-        if(args.length < 1) {
-            System.out.println("Crud command uses like 'symfonee crud <className>'");
+
+        // name of the class to generate
+        String clazzName = args[0];
+
+        if(0 == clazzName.length() || !regexClazzName.matcher(clazzName).matches()) {
+            System.out.println("<className> must be a conventionnal class name (e.g FooBar).");
             System.exit(1);
         }
 
-        String name = args[0];
-
-        if(0 == name.length()) {
-            System.out.println("<className> must be a conventionnal class name.");
-            System.exit(1);
-        }
-
-        String normalized = Character.toString(name.charAt(0)).toUpperCase() + name.substring(1);
+        // capitalize className
+        String normalized = Character.toString(clazzName.charAt(0)).toUpperCase() + clazzName.substring(1);
 
         Crud gen = new Crud();
         try {
@@ -48,40 +57,34 @@ public class Crud implements Command {
         return new CommandRequirements(
                 "crud",
                 new String[]{
-                        "class"
+                    "className"
                 },
                 "to generate CRUD files"
         );
     }
 
-    private Map<String, String> infos;
-
-    private static Pattern regex;
-    static {
-        regex = Pattern.compile("\\$\\$(\\w+)\\$\\$");
-    }
+    private Map<String, String> replacements;
 
     public Crud() {
     }
 
     private void generate(String name) throws IOException {
 
-        this.infos = new HashMap<>();
-        this.infos.put("className", name);
-        this.infos.put("lowerCaseClassName", name.toLowerCase());
+        this.replacements = new HashMap<>();
+        this.replacements.put("className", name);
+        this.replacements.put("lowerCaseClassName", name.toLowerCase());
 
         Map<String, String> files = new HashMap<>();
-        files.put("src/command/crud/stub/Controller.stub", "src/controller/" + this.infos.get("className") + "Controller.java");
-        files.put("src/command/crud/stub/Repository.stub", "src/repository/" + this.infos.get("className") + "DAO.java");
-        files.put("src/command/crud/stub/Entity.stub", "src/entity/" + this.infos.get("className") + ".java");
+        files.put("src/command/crud/stub/Controller.stub", "src/controller/" + this.replacements.get("className") + "Controller.java");
+        files.put("src/command/crud/stub/Repository.stub", "src/repository/" + this.replacements.get("className") + "DAO.java");
+        files.put("src/command/crud/stub/Entity.stub", "src/entity/" + this.replacements.get("className") + ".java");
 
-        files.put("src/command/crud/stub/view/add.stub", "web/WEB-INF/view/" + this.infos.get("lowerCaseClassName") + "/add.jsp");
-        files.put("src/command/crud/stub/view/edit.stub", "web/WEB-INF/view/" + this.infos.get("lowerCaseClassName") + "/edit.jsp");
-        files.put("src/command/crud/stub/view/list.stub", "web/WEB-INF/view/" + this.infos.get("lowerCaseClassName") + "/list.jsp");
-        files.put("src/command/crud/stub/view/show.stub", "web/WEB-INF/view/" + this.infos.get("lowerCaseClassName") + "/show.jsp");
+        files.put("src/command/crud/stub/view/add.stub", "web/WEB-INF/view/" + this.replacements.get("lowerCaseClassName") + "/add.jsp");
+        files.put("src/command/crud/stub/view/edit.stub", "web/WEB-INF/view/" + this.replacements.get("lowerCaseClassName") + "/edit.jsp");
+        files.put("src/command/crud/stub/view/list.stub", "web/WEB-INF/view/" + this.replacements.get("lowerCaseClassName") + "/list.jsp");
+        files.put("src/command/crud/stub/view/show.stub", "web/WEB-INF/view/" + this.replacements.get("lowerCaseClassName") + "/show.jsp");
 
-        Path stub;
-        Path file;
+        Path stub, file;
         for(Map.Entry<String, String> entry : files.entrySet()) {
             File gen = new File(entry.getValue());
 
@@ -92,6 +95,7 @@ public class Crud implements Command {
             String directories = gen.getAbsolutePath().substring(0, fileSeparator);
 
             System.out.print("Crud : Generating " + entry.getValue() + " ... ");
+
             // creation des repertoires parents du nouveau fichier
             Files.createDirectories(Paths.get(directories));
             // creation et ecriture du fichier
@@ -110,13 +114,13 @@ public class Crud implements Command {
         BufferedReader reader = new BufferedReader(new FileReader(filename));
         while((line = reader.readLine()) != null) {
             offset = 0;
-            matcher = regex.matcher(line);
+            matcher = regexVariables.matcher(line);
             replacedLine = line;
             while(matcher.find()) {
                 replacedLine = replacedLine.substring(0, matcher.start() - offset)
-                        + infos.get(matcher.group(1))
+                        + replacements.get(matcher.group(1))
                         + replacedLine.substring(matcher.end() - offset);
-                offset += matcher.group(0).length() - infos.get(matcher.group(1)).length();
+                offset += matcher.group(0).length() - replacements.get(matcher.group(1)).length();
             }
             replacedLines.add(replacedLine);
         }

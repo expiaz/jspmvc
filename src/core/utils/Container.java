@@ -1,5 +1,6 @@
 package core.utils;
 
+import core.FrontController;
 import core.annotations.Inject;
 
 import java.lang.reflect.Constructor;
@@ -44,6 +45,7 @@ public class Container {
         try {
             return this.get(clazz.getName());
         } catch (ClassNotFoundException e) {
+            FrontController.die(Container.class, e);
             return null;
         }
     }
@@ -54,19 +56,22 @@ public class Container {
 
     public Object get(String name, boolean factory) throws ClassNotFoundException {
         if (factory) {
-            if (!this.factories.containsKey(name)) {
-                try {
+            // doesn't exists
+            if (! this.factories.containsKey(name)) {
+                /*try {
                     this.factory(name, container -> {
                         try {
                             return container.resolve(Class.forName(name));
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            FrontController.die(Container.class, e);
                             return null;
                         }
                     });
                 } catch (Exception e) {
                     throw new ClassNotFoundException(name + " isn't a known factory\n\n" + e.getMessage());
-                }
+                }*/
+                throw new ClassNotFoundException(name + " isn't a known factory");
+                // return null;
             }
 
             Factory f = this.factories.get(name);
@@ -74,15 +79,16 @@ public class Container {
             return o;
         }
 
+        // key does not exists
         if (!this.singletons.containsKey(name)) {
-
+            // if factories got it, create it from it
             if(this.factories.containsKey(name)) {
                this.singleton(name, this.get(name, true));
-            } else {
+            } else { // try to resolve it from the given name
                 try {
                     this.singleton(name, this.resolve(Class.forName(name)));
-                } catch (Exception e2) {
-                    throw new ClassNotFoundException(name + " isn't a known singleton\n\n" + e2.getMessage());
+                } catch (Exception e) {
+                    throw new ClassNotFoundException(name + " isn't a known singleton");
                 }
             }
         }
@@ -96,34 +102,36 @@ public class Container {
         return this.resolve(clazz, new HashMap<>());
     }
 
-    public Object resolve(Class clazz, Map<Class, Object> arguments)
+    public Object resolve(Class clazz, Map<String, Object> arguments)
             throws ClassNotFoundException, IllegalAccessException,
             InvocationTargetException, InstantiationException {
 
         for (Constructor constructor : clazz.getDeclaredConstructors()) {
             Object[] resolved = new Object[constructor.getParameterCount()];
+            // number of the actual parameter
             int i = 0;
+            // informations about the DI of the current parameter
             Inject infos;
             for (Parameter parameter : constructor.getParameters()) {
 
-                if(arguments.containsKey(parameter.getType())) {
-
-                    resolved[i++] = arguments.get(parameter.getType());
-
-                } else if(parameter.isAnnotationPresent(Inject.class)) {
-
-                    infos = parameter.getAnnotation(Inject.class);
-                    resolved[i++] = this.get(
-                            infos.key().equals("__DEFAULT__")
-                                    ? parameter.getType().getName()
-                                    : infos.key(),
-                            infos.factory()
-                    );
-
-                } else {
+                if(! parameter.isAnnotationPresent(Inject.class)) {
                     break;
                 }
+
+                infos = parameter.getAnnotation(Inject.class);
+
+                String key = infos.key().equals("__DEFAULT__")
+                        ? parameter.getType().getName()
+                        : infos.key();
+
+                if(arguments.containsKey(key)) {
+                    resolved[i++] = arguments.get(key);
+                } else {
+                    resolved[i++] = this.get(key, infos.factory());
+                }
+
             }
+            // resolved all the parameters (the else break will fail this test)
             if (i == constructor.getParameterCount()) {
                 // return the instance
                 return constructor.newInstance(resolved);

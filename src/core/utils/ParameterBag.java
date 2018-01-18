@@ -2,6 +2,9 @@ package core.utils;
 
 import java.util.HashMap;
 
+/**
+ * represents a set of parameters transmitted between functions (for rendering or router)
+ */
 public class ParameterBag extends HashMap<String, Object> {
 
     public ParameterBag add(String k, Object v) {

@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * CLI manager
+ */
 public class CommandLine {
 
     private static Command[] commands = new Command[]{
@@ -15,8 +18,7 @@ public class CommandLine {
     public static void main(String[] args) {
 
         Map<String, Command> instances = new HashMap<>();
-        Map<String, String[]> availables = new HashMap<>();
-        Map<String, String> commandHelps = new HashMap<>();
+        Map<String, CommandRequirements> infos = new HashMap<>();
 
         StringBuilder help = new StringBuilder();
 
@@ -24,13 +26,12 @@ public class CommandLine {
         for(Command cmd : commands) {
             rq = cmd.requirements();
             instances.put(rq.getName(), cmd);
-            availables.put(rq.getName(), rq.getArgs());
+            infos.put(rq.getName(), rq);
 
             help.append("\t- '");
             help.append(rq.getName());
             help.append(" ");
-            commandHelps.put(rq.getName(), "<" + String.join("> <", rq.getArgs()) + "> : " + rq.getHelp());
-            help.append(commandHelps.get(rq.getName()));
+            help.append("<" + String.join("> <", rq.getArgs()) + "> : " + rq.getHelp());
             help.append("' ");
             help.append(rq.getHelp());
             help.append("\n");
@@ -45,16 +46,27 @@ public class CommandLine {
 
         String commandName = args[0];
 
-        if(! availables.containsKey(commandName)) {
+        if(! instances.containsKey(commandName)) {
             System.out.println(commandName + " command not found.");
+            System.out.println("Available commands are :");
+            System.out.println(help.toString());
             System.exit(0);
         }
 
-        if(args.length - 1 < availables.get(commandName).length) {
-            System.out.println(commandHelps.get(commandName));
+        if(args.length - 1 < infos.get(commandName).getArgs().length) {
+            System.out.println(
+                "Invalid number of arguments for " + commandName +
+                " expected " + infos.get(commandName).getArgs().length +
+                " got " + (args.length - 1)
+            );
+            System.out.println(
+                "'<" + String.join("> <", infos.get(commandName).getArgs()) + ">' : " +
+                infos.get(commandName).getHelp()
+            );
             System.exit(0);
         }
 
+        // slice the command name (first arg) and give the others to the executed command
         instances.get(commandName).execute(Arrays.copyOfRange(args, 1, args.length));
     }
 
