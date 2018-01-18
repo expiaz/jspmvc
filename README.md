@@ -23,7 +23,7 @@ public class DemoController extends BaseController{
     
     public StudentController(@Inject Renderer renderer, @Inject Router router,
                          @Inject Request request, @Inject Response response,
-                         @Inject EtudiantDAO dao) {
+                         @Inject DemoDAO dao) {
         super(renderer, router, request, response);
         this.dao = dao;
     }
