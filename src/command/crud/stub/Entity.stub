@@ -12,7 +12,7 @@ public class $$className$$ extends BaseEntity {
 	public $$className$$(){}
 
 	@Override
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 

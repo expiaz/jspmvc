@@ -1,20 +1,29 @@
 <%@ page import="controller.BaseController" %>
 <%@ page import="core.utils.ParameterBag" %>
 <%@ page import="core.annotations.Parameter" %>
-<%@ page import="java.util.Map" %><%--
+<%@ page import="java.util.Map" %>
+<%@ page import="entity.User" %><%--
   Created by IntelliJ IDEA.
-  User: gidonr
+  Admin: gidonr
   Date: 24/11/17
   Time: 14:43
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
-<jsp:useBean id="router" class="core.http.Router" scope="request"/>
-<jsp:useBean id="renderer" class="core.utils.Renderer" scope="request"/>
-<jsp:useBean id="container" class="core.utils.Container" scope="request"/>
+<jsp:useBean id="router" class="core.http.Router" scope="application"/>
+<jsp:useBean id="renderer" class="core.utils.Renderer" scope="application"/>
+<jsp:useBean id="container" class="core.utils.Container" scope="application"/>
 
 <jsp:useBean id="title" class="java.lang.String" scope="request"/>
+
+<%
+    User user = (User) session.getAttribute("user");
+    boolean connected = false;
+    if (user != null) {
+        connected = true;
+    }
+%>
 
 <!DOCTYPE html>
 <html>
@@ -48,23 +57,40 @@
         <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+    <div class="collapse navbar-collapse">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="dropdown-students" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Etudiants</a>
-                <div class="dropdown-menu" aria-labelledby="dropdown-students">
-                    <a class="dropdown-item" href="<%= router.build("student.list") %>">Voir les étudiants</a>
-                    <a class="dropdown-item" href="<%= router.build("student.add") %>">Ajouter un étudiant</a>
+                <a class="nav-link dropdown-toggle" id="dropdown-etudiants" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Etudiants</a>
+                <div class="dropdown-menu" aria-labelledby="dropdown-etudiants">
+                    <a class="dropdown-item" href="<%= router.build("etudiant.list") %>">Voir les étudiants</a>
+                    <a class="dropdown-item" href="<%= router.build("etudiant.add") %>">Ajouter un étudiant</a>
                 </div>
             </li>
 
-            <%--<li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="dropdown-groups" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Groupes</a>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="dropdown-groups" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Modules</a>
                 <div class="dropdown-menu" aria-labelledby="dropdown-groups">
-                    <a class="dropdown-item" href="<%= router.build("group.list") %>">Voir les groupes</a>
-                    <a class="dropdown-item" href="<%= router.build("group.add") %>">Ajouter un groupe</a>
+                    <a class="dropdown-item" href="<%= router.build("module.list") %>">Voir les modules</a>
+                    <a class="dropdown-item" href="<%= router.build("module.add") %>">Ajouter un module</a>
                 </div>
-            </li>--%>
+            </li>
+        </ul>
+        <ul class="navbar-nav">
+            <% if (connected) { %>
+                <% if (user.isAdmin()) { %>
+                    <li class="nav-item">
+                        <a href="<%= router.build("etudiant.list") %>">Administration</a>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item">
+                        <a href="<%= router.build("etudiant.show", new ParameterBag().add("etudiant", user.getId())) %>"><%= user.getLogin() %></a>
+                    </li>
+                <% } %>
+            <% } else { %>
+                <li class="nav-item">
+                    <a href="<%= router.build("index.login") %>">Connexion</a>
+                </li>
+            <% } %>
         </ul>
         <%--<form class="form-inline my-2 my-lg-0">
             <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
@@ -76,12 +102,12 @@
 <main class="container">
 
     <%
-    ParameterBag flashBag = (ParameterBag) request.getAttribute(BaseController.FLASH_BAG);
-    for (Map.Entry<String, Object> entry : flashBag.entrySet()) {
+        ParameterBag flashBag = (ParameterBag) request.getAttribute(BaseController.FLASH_BAG);
+        for (Map.Entry<String, Object> entry : flashBag.entrySet()) {
     %>
-    <div class="notification notification-<%= entry.getKey().toLowerCase() %>">
-        <%= entry.getValue() %>
-    </div>
+        <div class="notification notification-<%= entry.getKey().toLowerCase() %>">
+            <%= entry.getValue() %>
+        </div>
     <%
-    }
+        }
     %>

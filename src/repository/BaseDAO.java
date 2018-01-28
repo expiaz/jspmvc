@@ -1,7 +1,6 @@
 package repository;
 
 import core.annotations.Inject;
-import core.utils.Fetchable;
 import core.utils.Fetcher;
 import entity.BaseEntity;
 
@@ -11,7 +10,7 @@ import java.util.List;
 
 public abstract class BaseDAO<T extends BaseEntity> implements Fetcher<T> {
 
-    private EntityManager em;
+    protected EntityManager em;
 
     protected Class<T> entity;
     protected String table;

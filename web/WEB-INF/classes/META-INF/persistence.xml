@@ -9,14 +9,16 @@
 
         <!-- Classes persistées - liées à tes tables de la base de données -->
         <class>entity.Etudiant</class>
-        <class>entity.Groupe</class>
+        <class>entity.Module</class>
+        <class>entity.Note</class>
+        <class>entity.Admin</class>
 
         <!-- Propriétés de l'unité de persistence -->
         <properties>
 
             <!-- JDBC connection properties -->
             <!--  en SqlLite, sur un fichier de votre arborescence (en windows c:/etc...) -->
-            <property name="javax.persistence.jdbc.url" value="jdbc:sqlite:/home/gidonr/Documents/cours/java/jee/symfonee/web/WEB-INF/data/db"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:sqlite:/home/gidonr/Documents/cours/java/jee/symfonee/web/WEB-INF/data/database.db"/>
             <property name="javax.persistence.jdbc.user" value=""/>
             <!--property name="eclipselink.jdbc.password" value=""/-->
             <property name="javax.persistence.jdbc.driver" value="org.sqlite.JDBC"/>
@@ -41,7 +43,7 @@
 
         <!-- Classes persistées - liées à tes tables de la base de données -->
         <class>entity.Etudiant</class>
-        <class>entity.Groupe</class>
+        <class>entity.Module</class>
 
         <!-- Propriétés de l'unité de persistence -->
         <properties>

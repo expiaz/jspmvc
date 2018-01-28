@@ -17,10 +17,8 @@ public class $$className$$Controller extends BaseController {
 
     private $$className$$DAO dao;
 
-    public $$className$$Controller(@Inject Renderer renderer, @Inject Router router,
-                             @Inject Request request, @Inject Response response,
-                             @Inject $$className$$DAO dao) {
-        super(renderer, router, request, response);
+    public $$className$$Controller(@Inject Container container, @Inject $$className$$DAO dao) {
+        super(container);
         this.dao = dao;
     }
 
@@ -43,12 +41,14 @@ public class $$className$$Controller extends BaseController {
     @Route(name = "$$lowerCaseClassName$$.add", path = "/add", methods = {HttpMethod.POST, HttpMethod.GET})
     public Response addAction(Request request) {
 
+        final Response form = this.render("@$$lowerCaseClassName$$/add");
+
         if(request.isPost()) {
             String param = request.getParameter("param");
 
             if (param == null) {
                 this.addError("Champs invalide");
-                return this.render("@$$lowerCaseClassName$$/add");
+                return form;
             }
 
             $$className$$ $$lowerCaseClassName$$ = new $$className$$(/* fields */);
@@ -59,21 +59,23 @@ public class $$className$$Controller extends BaseController {
             );
         }
 
-        return this.render("@$$lowerCaseClassName$$/add");
+        return form;
     }
 
     @Route(name = "$$lowerCaseClassName$$.edit", path = "/edit/{$$lowerCaseClassName$$}", methods = {HttpMethod.POST, HttpMethod.GET})
     public Response editAction(Request request,
                                @Parameter(name = "$$lowerCaseClassName$$", mask = "\\d+") $$className$$ $$lowerCaseClassName$$) {
 
+        final Response form = this.render("@$$lowerCaseClassName$$/edit",
+            new ParameterBag().add("$$lowerCaseClassName$$", $$lowerCaseClassName$$)
+        );
+
         if(request.isPost()) {
             String param = request.getParameter("param");
 
             if (param == null) {
                 this.addError("Champs invalide");
-                return this.render("@$$lowerCaseClassName$$/edit",
-                    new ParameterBag().add("$$lowerCaseClassName$$", $$lowerCaseClassName$$)
-                );
+                return form;
             }
 
             // $$lowerCaseClassName$$.setXX(param);
@@ -84,9 +86,7 @@ public class $$className$$Controller extends BaseController {
             );
         }
 
-        return this.render("@$$lowerCaseClassName$$/edit",
-            new ParameterBag().add("$$lowerCaseClassName$$", $$lowerCaseClassName$$)
-        );
+        return form;
     }
 
 }

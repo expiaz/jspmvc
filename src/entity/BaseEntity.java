@@ -7,12 +7,21 @@ import java.io.Serializable;
 
 public abstract class BaseEntity implements Serializable, Fetchable {
 
-    public abstract int getId();
+    public abstract Integer getId();
     public abstract void setId(Integer id);
 
-    BaseEntity(){
-
+    public boolean equals(Object other) {
+        if (! (other instanceof BaseEntity)) {
+            return false;
+        }
+        return this.getId().intValue() == ((BaseEntity) other).getId().intValue();
     }
+
+    public int hashCode() {
+        return this.getId().intValue();
+    }
+
+    BaseEntity(){ }
 
     @Override
     public Class from() {

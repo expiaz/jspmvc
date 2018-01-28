@@ -1,5 +1,6 @@
 package core.http;
 
+import controller.BaseController;
 import core.utils.Container;
 import core.utils.ParameterBag;
 
@@ -20,8 +21,8 @@ public class Router {
         this.routesByName = new HashMap<>();
     }
 
-    public void add(String pattern, Class controller, Method action, HttpMethod method, String name) {
-        Route route = new Route(name, pattern, controller, action, method);
+    public void add(String pattern, Class<? extends BaseController> controller, Method action, HttpMethod method, String name, Class<? extends Middleware>[] before, Class<? extends Middleware>[] after) {
+        Route route = new Route(name, pattern, controller, action, method, Arrays.asList(before),  Arrays.asList(after));
         routesByName.put(name, route);
         routes.add(route);
     }

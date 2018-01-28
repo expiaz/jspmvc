@@ -4,21 +4,34 @@ import core.annotations.Parameter;
 import core.annotations.Inject;
 import core.annotations.Route;
 
+import core.http.HttpMethod;
 import core.http.Request;
 import core.http.Response;
 import core.http.Router;
+import core.utils.Container;
 import core.utils.ParameterBag;
 import core.utils.Renderer;
+import entity.Admin;
+import entity.User;
+import repository.AdminDAO;
 
 public class IndexController extends BaseController {
 
-    public IndexController(@Inject Renderer renderer, @Inject Router router,
-                           @Inject Request request, @Inject Response response) {
-        super(renderer, router, request, response);
+    public IndexController(@Inject Container container) {
+        super(container);
     }
 
     @Route(name = "index.home")
     public Response indexAction() {
+        this.addMessage("Message");
+        this.addConfirmation("Confirmation");
+        this.addError("Error");
+
+        AdminDAO dao = ((AdminDAO) this.container.get(AdminDAO.class));
+        if (!dao.exists("root")) {
+            dao.insert(new Admin("root", "root"));
+        }
+
         return this.render("@view/home");
     }
 
@@ -28,6 +41,35 @@ public class IndexController extends BaseController {
                 new ParameterBag()
                     .add("code", error)
         );
+    }
+
+    @Route(name = "index.login", path = "/login", methods = {HttpMethod.GET, HttpMethod.POST})
+    public Response loginAction(Request request) {
+
+        Response form = this.render("@shared/login");
+
+        if (this.isLogged()) {
+            return this.redirectToRoute("index.home");
+        }
+
+        if(request.isPost()) {
+
+            String login = request.getParameter("login", "");
+            String password = request.getParameter("password", "");
+
+            AdminDAO adminDAO = (AdminDAO) this.container.get(AdminDAO.class);
+
+            User user = adminDAO.authenticate(login, password);
+            if(user == null) {
+                this.addError("Login ou mot de passe incorrect");
+                return form;
+            }
+
+            this.getSession().setAttribute("user", user);
+            return this.redirectToRoute("index.home");
+        }
+
+        return form;
     }
 
 }

@@ -1,16 +1,17 @@
 package core.http;
 
+import controller.BaseController;
+import core.FrontController;
 import core.annotations.Parameter;
-import core.utils.Filter;
+import core.utils.Container;
 import core.utils.ParameterBag;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static core.utils.Filter.*;
 
 public class Route {
 
@@ -21,19 +22,25 @@ public class Route {
 
     private List<RouteArgument> arguments;
 
+    private List<Class<? extends Middleware>> before;
+    private List<Class<? extends Middleware>> after;
+
     private String path;
     private String name;
     private Pattern pattern;
-    private Class controller;
+    private Class<? extends BaseController> controller;
     private Method action;
     private HttpMethod method;
 
-    public Route(String name, String path, Class controller, Method action, HttpMethod method) {
+    public Route(String name, String path, Class<? extends BaseController> controller, Method action, HttpMethod method, List<Class<? extends Middleware>> before, List<Class<? extends Middleware>> after) {
         this.name = name;
         this.controller = controller;
         this.action = action;
         this.method = method;
         this.arguments = new ArrayList<>();
+
+        this.before = before;
+        this.after = after;
 
         if(path.length() > 1 && path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
@@ -81,13 +88,50 @@ public class Route {
         this.pattern = Pattern.compile(pattern);
     }
 
+    private Middleware instanciateMiddleware(Container container, Class<? extends Middleware> middlewareClass)
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        return middlewareClass.getConstructor(Container.class).newInstance(container);
+    }
+
+    public Middleware getMiddlewareStack(Container container, Middleware controller)
+    {
+        try {
+
+            Middleware first, last, current;
+            if (this.before.size() > 0) {
+                first = last = this.instanciateMiddleware(container, this.before.get(0));
+                for(int i = 1; i < this.before.size(); ++i) {
+                    current = this.instanciateMiddleware(container, this.before.get(i));
+                    last.setNext(current);
+                    last = current;
+                }
+                last.setNext(controller);
+                last = controller;
+            } else {
+                first = last = controller;
+            }
+
+            for (Class<? extends Middleware> middleware : this.after) {
+                current = this.instanciateMiddleware(container, middleware);
+                last.setNext(current);
+                last = current;
+            }
+
+            return first;
+
+        } catch (Exception e) {
+            FrontController.die(Route.class, e);
+            return null;
+        }
+    }
+
     public String build(ParameterBag arguments) {
         String path = this.path;
         int offset = 0;
 
         for(RouteArgument arg : this.arguments) {
-            // replace the {name} by (mask)
-            path = path.substring(offset, arg.getStart()) + arguments.get(arg.getName()).toString() + path.substring(arg.getEnd() - offset);
+            // replace the {name} by arguments.get(name)
+            path = path.substring(0, arg.getStart() - offset) + arguments.get(arg.getName()).toString() + path.substring(arg.getEnd() - offset);
             // increment offset by the size of the missing characters (fullgroup - replaced group)
             offset += arg.getEnd() - arg.getStart() - arg.getName().length();
         }
@@ -103,7 +147,7 @@ public class Route {
         return pattern;
     }
 
-    public Class getController() {
+    public Class<? extends BaseController> getController() {
         return controller;
     }
 

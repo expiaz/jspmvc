@@ -54,21 +54,23 @@ public class DemoController extends BaseController{
         );
     }
     
-    @Route(name = "demo.edit", path = "/edit/{demo}", methods = {HttpMethod.POST, HttpMethod.GET})
+    @Route(name = "demo.edit", path = "/edit/{demo}", methods = {HttpMethod.POST, HttpMethod.GET}, before = {AdminMiddleware.class})
     public Response editAction(
         Request request,
         @Parameter(name = "demo", mask = "\\d+") Demo demo
     ) {
+        
+        final Response form = this.render("@demo/edit",
+            new ParameterBag()
+                .add("demo", demo)
+        );
 
         if(request.isPost()) {
             String name = request.getParameter("name");
     
             if (nom == null || nom.length() == 0) {
                 this.addError("Invalid name");
-                return this.render("@demo/edit",
-                    new ParameterBag()
-                        .add("demo", demo)
-                );
+                return form;
             }
     
             demo.setName(name);
@@ -80,15 +82,37 @@ public class DemoController extends BaseController{
             );
         }
         
-        return this.render("@demo/edit",
-            new ParameterBag()
-                .add("demo", demo)
-        );
+        return form;
     }
     
     @Route(name = "demo.redirect", path = "redirect")
     public Response redirectAction(Request request) {
         this.redirectToRoute("demo.index");
+    }
+    
+}
+```
+
+#### Middleware
+
+```java
+public class AdminMiddleware extends Middleware {
+    
+    Router router;
+    
+    public AdminMiddleware(Container container) {
+        super(container);
+        this.router = (Router) this.container.get(Router.class);
+    }
+    
+    @Override
+    public Response apply(Request request, Response response) {
+        HttpSession session = request.getRequest().getSession();
+        User user = (User) session.getAttribute("user");
+        if (user == null || !user.isAdmin()) {
+            return response.redirect(this.router.build("login"));
+        }
+        return this.next.apply(request, response);
     }
     
 }

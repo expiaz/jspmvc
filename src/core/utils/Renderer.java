@@ -3,6 +3,7 @@ package core.utils;
 import javax.servlet.ServletContext;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Renderer{
 
@@ -46,7 +47,7 @@ public class Renderer{
         // get the context path (e.g. X_WAR_EXPLODED)
         String ctxPath = ((ServletContext) this.container.get(ServletContext.class)).getContextPath();
         // return the path to the asked file
-        return ctxPath + this.resolve(path);
+        return ctxPath + this.resolve(path) + "?v=" + UUID.randomUUID();
     }
 
     /**

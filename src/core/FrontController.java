@@ -1,8 +1,9 @@
 package core;
 
-import controller.GroupeController;
+import controller.BaseController;
+import controller.ModuleController;
 import controller.IndexController;
-import controller.StudentController;
+import controller.EtudiantController;
 import core.annotations.*;
 import core.annotations.Route;
 import core.database.Database;
@@ -19,19 +20,22 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FrontController extends HttpServlet {
 
     public static void die(Class from, Exception why) {
-        System.out.println("\nFrontController::die : unrecoverable error from " + from.getClass().getName() + "\n" + why.getMessage());
+        System.out.println("\nFrontController::die : unrecoverable error from " + from.getName() + "\n" + why.getMessage());
         why.printStackTrace();
         System.exit(1);
     }
 
     private static Class[] controllers = new Class[]{
         IndexController.class,
-        StudentController.class,
-        GroupeController.class
+        EtudiantController.class,
+        ModuleController.class
     };
 
     private static core.http.Route defaultRoute;
@@ -42,7 +46,9 @@ public class FrontController extends HttpServlet {
                 "{code}",
                 IndexController.class,
                 IndexController.class.getMethod("errorAction", Integer.class),
-                HttpMethod.GET
+                HttpMethod.GET,
+                new ArrayList<>(),
+                new ArrayList<>()
             );
         } catch (NoSuchMethodException e) {
             FrontController.die(FrontController.class, e);
@@ -76,6 +82,13 @@ public class FrontController extends HttpServlet {
         this.container.global(this.router);
         this.container.global(this.renderer);
         this.container.global(this.database);
+        this.container.singleton(ServletContext.class, getServletContext());
+
+        // globals
+        getServletContext().setAttribute("router", this.router);
+        getServletContext().setAttribute("renderer", this.renderer);
+        getServletContext().setAttribute("container", this.container);
+
         this.container.factory(EntityManager.class, new Factory<EntityManager>() {
             @Override
             public EntityManager create(Container container) {
@@ -83,7 +96,7 @@ public class FrontController extends HttpServlet {
             }
         });
 
-        for(Class controller : controllers) {
+        for(Class<? extends BaseController> controller : controllers) {
 
             if(! controller.getName().endsWith("Controller")) {
                 FrontController.die(FrontController.class, new IllegalArgumentException(controller.getName() + " must ends with 'Controller'"));
@@ -111,7 +124,11 @@ public class FrontController extends HttpServlet {
                         name = actionName;
                     }
                     for(HttpMethod verbose : annotation.methods()) {
-                        this.router.add(prefix + annotation.path(), controller, action, verbose, name);
+                        this.router.add(
+                            prefix + annotation.path(),
+                            controller, action, verbose, name,
+                            annotation.before(), annotation.after()
+                        );
                     }
                 }
             }
@@ -143,15 +160,9 @@ public class FrontController extends HttpServlet {
 
             this.container.singleton(HttpServletRequest.class, request);
             this.container.singleton(HttpServletResponse.class, response);
-            this.container.singleton(ServletContext.class, getServletContext());
 
             request.setCharacterEncoding("UTF-8");
             response.setCharacterEncoding("UTF-8");
-
-            // globals
-            request.setAttribute("router", this.router);
-            request.setAttribute("renderer", this.renderer);
-            request.setAttribute("container", this.container);
 
             request.setAttribute("title", request.getPathInfo());
 
@@ -173,17 +184,19 @@ public class FrontController extends HttpServlet {
         }
     }
 
-    private void dispatch(Request request, Response response, Match match)
+    private void dispatch(Request request, Response response, final Match match)
             throws InvocationTargetException, IllegalAccessException, NoSuchMethodException,
             InstantiationException, ServletException, IOException, ClassNotFoundException {
 
-        // resolve the controller with the Container Resolver's
-        Object controller = this.container.resolve(match.getRoute().getController());
+        // resolve the controller with the Container Resolver
+        final Object controller = this.container.resolve(match.getRoute().getController());
         // parse the action arguments
-        Method action = match.getRoute().getAction();
+        final Method action = match.getRoute().getAction();
 
         // retrieve parameters
         Object[] parameters = new Object[action.getParameterCount()];
+        ParameterBag resolvedParameters = new ParameterBag();
+        Map<String, String> rawParameters = new HashMap<>();
         int i = 0;
         for(java.lang.reflect.Parameter p : action.getParameters()) {
             if (p.isAnnotationPresent(Parameter.class)) { // annotation found for the specified parameter
@@ -204,8 +217,8 @@ public class FrontController extends HttpServlet {
                             FrontController.class,
                             new InvalidParameterException(
                                 "can't dispatch to action " + controller.getClass().getName() + "::" +
-                                action.getName() + " parameter " + pannotation.name() + " with provided value of " + rawParam +
-                                "for type " + parameterClass.getName()
+                                action.getName() + " : parameter " + pannotation.name() + " with provided value of " + rawParam +
+                                " for type " + parameterClass.getName()
                             )
                         );
                     }
@@ -213,11 +226,13 @@ public class FrontController extends HttpServlet {
                     param = match.getParameters().get(pannotation.name());
                 }
                 // add it to the list
+                resolvedParameters.put(pannotation.name(), param);
+                rawParameters.put(pannotation.name(), (String) match.getParameters().get(pannotation.name()));
                 parameters[i++] = param;
             } else if (p.isAnnotationPresent(Inject.class)) { // Dependency injection asked
                 // get details for DI
                 Inject pinject = p.getAnnotation(Inject.class);
-                // DI the parameter and add it to the list
+                // resolve the parameter and add it to the list
                 parameters[i++] = this.container.get(
                     pinject.key().equals("__DEFAULT__")
                             ? p.getType().getName()
@@ -227,10 +242,30 @@ public class FrontController extends HttpServlet {
             } else { // nothing found, try to resolve the type with the container (it'll surely fail)
                 parameters[i++] = this.container.get(p.getType().getName());
             }
+
+
         }
 
+        request.setPathParameters(resolvedParameters);
+        request.setRawPathParameters(rawParameters);
+
+        Middleware controllerMiddleware = new Middleware(this.container) {
+            @Override
+            public Response apply(Request request, Response response) {
+                try {
+                    Response r = (Response) action.invoke(controller, parameters);
+                    return this.getNext().apply(request, r);
+                } catch (Exception e) {
+                    FrontController.die(match.getRoute().getController(), new Exception("dispatch of " + request.getMethod() + " " + action.getName() + " failed : \n " + e.getMessage()));
+                    return null;
+                }
+            }
+        };
+
         // IOC and get response
-        Response res = (Response) action.invoke(controller, parameters);
+        // Response res = (Response) action.invoke(controller, parameters);
+
+        Response res = match.getRoute().getMiddlewareStack(this.container, controllerMiddleware).apply(request, response);
 
         // switch over response type to handle it correctly, either print or redirection
         if(res.isView()) { // print

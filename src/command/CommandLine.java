@@ -30,9 +30,9 @@ public class CommandLine {
 
             help.append("\t- '");
             help.append(rq.getName());
-            help.append(" ");
-            help.append("<" + String.join("> <", rq.getArgs()) + "> : " + rq.getHelp());
-            help.append("' ");
+            help.append(" <");
+            help.append(String.join("> <", rq.getArgs()));
+            help.append(">' : ");
             help.append(rq.getHelp());
             help.append("\n");
         }

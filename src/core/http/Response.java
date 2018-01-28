@@ -1,5 +1,7 @@
 package core.http;
 
+import core.annotations.Inject;
+
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -17,7 +19,7 @@ public class Response {
      */
     private String to;
 
-    public Response(HttpServletResponse response) {
+    public Response(@Inject HttpServletResponse response) {
         this.response = response;
     }
 

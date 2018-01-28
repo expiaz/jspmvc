@@ -1,13 +1,13 @@
 package repository;
 
 import core.annotations.Inject;
-import entity.Groupe;
+import entity.Module;
 
 import javax.persistence.EntityManager;
 
-public class GroupeDAO extends BaseDAO<Groupe> {
+public class ModuleDAO extends BaseDAO<Module> {
 
-    public GroupeDAO(@Inject EntityManager em) {
+    public ModuleDAO(@Inject EntityManager em) {
         super(em);
     }
 

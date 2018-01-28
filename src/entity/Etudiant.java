@@ -1,12 +1,18 @@
 package entity;
 
+import com.sun.istack.internal.NotNull;
+import core.utils.Encoder;
+
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-public class Etudiant extends BaseEntity {
+public class Etudiant extends BaseEntity implements User {
 
     @Id
     @GeneratedValue
+    @Column(nullable = false, unique = true)
 	private Integer id;
 
     @Column(nullable = false)
@@ -15,13 +21,27 @@ public class Etudiant extends BaseEntity {
     @Column(nullable = false)
 	private String nom;
 
-    @Column
-    private int absences;
+    @Column(nullable = false)
+    private String email;
 
-    @ManyToOne
-    private Groupe groupe;
+    @Column(nullable = false)
+    private String password;
 
-	public Etudiant(){}
+    @Column(nullable = false)
+    @NotNull
+    private int absences = 0;
+
+    @ManyToMany(cascade = {
+        CascadeType.PERSIST,
+        CascadeType.MERGE
+    })
+    @JoinTable
+    private Set<Module> modules;
+
+    @OneToMany(targetEntity = Note.class, mappedBy = "etudiant", fetch = FetchType.LAZY, cascade = {CascadeType.ALL})
+    private Set<Note> notes;
+
+	public Etudiant(){ }
 	
 	public Etudiant(String nom, String prenom) {
 		this.prenom = prenom;
@@ -29,7 +49,7 @@ public class Etudiant extends BaseEntity {
 	}
 
 	@Override
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 
@@ -62,16 +82,74 @@ public class Etudiant extends BaseEntity {
         this.absences = absences;
     }
 
-    public Groupe getGroupe() {
-        return groupe;
+    public Set<Note> getNotes() {
+        return notes;
     }
 
-    public void setGroupe(Groupe groupe) {
-	    this.groupe.getEtudiants().remove(this);
-        this.groupe = groupe;
-        if (!this.groupe.getEtudiants().contains(this)) {
-            this.groupe.getEtudiants().add(this);
+    public Set<Note> getNotes(Module module) {
+	    Set<Note> notes = new HashSet<>();
+	    for (Note note : this.getNotes()) {
+	        if (note.getModule().equals(module.getId())) {
+	            notes.add(note);
+            }
         }
+        return notes;
     }
 
+    public void addNote(Note note) {
+        this.getNotes().add(note);
+    }
+
+    public void setNotes(Set<Note> notes) {
+        this.notes = notes;
+    }
+
+    public Set<Module> getModules() {
+        return modules;
+    }
+
+    public void setModules(Set<Module> modules) {
+        this.modules = modules;
+    }
+
+    public void addModule(Module module) {
+	    this.getModules().add(module);
+    }
+
+    public void removeModule(Module module) {
+	    this.modules.remove(module);
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    @Override
+    public void setLogin(String login) {
+        this.setEmail(login);
+    }
+
+    @Override
+    public String getLogin() {
+        return this.getEmail();
+    }
+
+    @Override
+    public void setPassword(String password) {
+        this.password = Encoder.md5(password);
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public boolean isAdmin() {
+        return false;
+    }
 }

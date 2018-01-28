@@ -4,10 +4,13 @@ import core.http.Request;
 import core.http.Response;
 import core.http.Router;
 import core.annotations.Inject;
+import core.utils.Container;
 import core.utils.NotificationType;
 import core.utils.ParameterBag;
 import core.utils.Renderer;
+import entity.User;
 
+import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,37 +27,36 @@ public abstract class BaseController {
     private Response response;
     private Request request;
 
+    protected Container container;
+
     /**
      * Renderer for resolving views path
      */
-    Renderer renderer;
+    protected Renderer renderer;
     /**
      * Router for resolving routes URL
      */
-    Router router;
+    protected Router router;
 
     /**
      * view parameters
      */
-    ParameterBag context;
+    protected ParameterBag context;
     /**
      * special parameters that will display on the layout
      */
-    ParameterBag flashBag;
+    private ParameterBag flashBag;
 
     /**
      * base constructor with injected dependencies
-     * @param renderer
-     * @param router
-     * @param request
-     * @param response
+     * @param container
      */
-    public BaseController(@Inject Renderer renderer, @Inject Router router,
-                             @Inject Request request, @Inject Response response) {
-        this.renderer = renderer;
-        this.router = router;
-        this.request = request;
-        this.response = response;
+    public BaseController(@Inject Container container) {
+        this.container = container;
+        this.renderer = (Renderer) container.get(Renderer.class);
+        this.router = (Router) container.get(Router.class);
+        this.request = (Request) container.get(Request.class);
+        this.response = (Response) container.get(Response.class);
         this.flashBag = new ParameterBag();
         this.context = new ParameterBag();
         this.context.add(FLASH_BAG, this.flashBag);
@@ -104,6 +106,10 @@ public abstract class BaseController {
         return this.redirect(this.router.build(route, parameters));
     }
 
+    Response redirectToRoute(String route) {
+        return this.redirect(this.router.build(route));
+    }
+
     // shortcut for 404
     Response notFound() {
         return this.response.redirect(this.router.build("@index/error", new ParameterBag().add("code", 404)));
@@ -117,7 +123,7 @@ public abstract class BaseController {
         return this.response;
     }
 
-    /**
+    /*
      * FLASHBAG
      */
 
@@ -152,6 +158,25 @@ public abstract class BaseController {
      */
     public void addConfirmation(String message) {
         this.addNotification(message, NotificationType.VALID);
+    }
+
+    public HttpSession getSession() {
+        return this.request.getRequest().getSession();
+    }
+
+    public User getUser()
+    {
+        return (User) this.getSession().getAttribute("user");
+    }
+
+    public boolean isLogged()
+    {
+        return this.getUser() != null;
+    }
+
+    public boolean isAdmin()
+    {
+        return this.getUser().isAdmin();
     }
 
 }
