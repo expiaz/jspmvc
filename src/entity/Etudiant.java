@@ -89,11 +89,31 @@ public class Etudiant extends BaseEntity implements User {
     public Set<Note> getNotes(Module module) {
 	    Set<Note> notes = new HashSet<>();
 	    for (Note note : this.getNotes()) {
-	        if (note.getModule().equals(module.getId())) {
+	        if (note.getModule().equals(module)) {
 	            notes.add(note);
             }
         }
         return notes;
+    }
+
+    public float getMoyenne() {
+	    float moyenne = 0;
+	    int n = 0;
+	    for (Note note : this.getNotes()) {
+	        moyenne += note.getValeur();
+	        ++n;
+        }
+        return n > 0 ? moyenne / n : moyenne;
+    }
+
+    public float getMoyenne(Module module) {
+        float moyenne = 0;
+        int n = 0;
+	    for (Note note : this.getNotes(module)) {
+            moyenne += note.getValeur();
+            ++n;
+        }
+        return n > 0 ? moyenne / n : moyenne;
     }
 
     public void addNote(Note note) {

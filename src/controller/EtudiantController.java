@@ -196,4 +196,19 @@ public class EtudiantController extends BaseController {
         return form;
     }
 
+    @Route(name = "etudiant.absence.edit", path = "/{etudiant}/absence/{number}", methods = HttpMethod.POST, before = AdminMiddleware.class)
+    public Response absenceAction(
+        @Parameter(name = "etudiant", mask = "\\d+") Etudiant etudiant,
+        @Parameter(name = "number", mask = "-?1") int number
+    ) {
+        int absences = etudiant.getAbsences() + number;
+        if(absences < 0) {
+            absences = 0;
+        }
+        etudiant.setAbsences(absences);
+        this.dao.update(etudiant);
+
+        return this.redirectToRoute("etudiant.show", new ParameterBag().add("etudiant", etudiant.getId()));
+    }
+
 }

@@ -1,7 +1,7 @@
 <%@ page import="core.utils.ParameterBag" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
-<jsp:useBean id="router" class="core.http.Router" scope="request"/>
+<jsp:useBean id="router" class="core.http.Router" scope="application"/>
 
 <jsp:useBean id="note" class="entity.Note" scope="request"/>
 

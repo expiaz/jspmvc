@@ -6,7 +6,7 @@
 
 <jsp:useBean id="etudiant" class="entity.Etudiant" scope="request"/>
 
-<h1>Modifier un étudiant</h1>
+<h1>Modifier le profil de <strong>${ etudiant.nom }</strong> ${ etudiant.prenom }</h1>
 
 <form action="<%= router.build("etudiant.edit", new ParameterBag().add("etudiant", etudiant.getId())) %>" method="post">
     <input type="text" name="nom" placeholder="Nom" value="${etudiant.nom}">
@@ -15,10 +15,6 @@
     <br/>
     <button>Modifer</button>
 </form>
-
-<a href="<%= router.build("etudiant.module.add", new ParameterBag().add("etudiant", etudiant.getId()))%>">Ajouter un module</a>
-<a href="<%= router.build("etudiant.note.add", new ParameterBag().add("etudiant", etudiant.getId()))%>">Ajouter une note</a>
-
 <%--
 <ul>
     <c:forEach items="${etudiants}" var="etudiant">

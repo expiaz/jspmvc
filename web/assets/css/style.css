@@ -21,3 +21,20 @@ body {
 .notification-valid {
     background: #4CAF50;
 }
+
+table {
+    width: 100%;
+}
+
+.inline {
+    display: inline-block;
+}
+
+nav a, nav a:hover {
+    color :white;
+    text-decoration: none;
+}
+
+.no-margin {
+    margin: 0;
+}

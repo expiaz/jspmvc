@@ -8,19 +8,30 @@
 <jsp:useBean id="renderer" class="core.utils.Renderer" scope="application"/>
 
 <h1>Etudiants</h1>
-<ul>
-    <%
-        for (Etudiant etudiant: (Collection<Etudiant>) request.getAttribute("etudiants")) {
-    %>
-        <li>
-            <a href="<%= router.build("etudiant.show", new ParameterBag().add("etudiant", etudiant.getId())) %>">
-                <strong><%= etudiant.getNom() %></strong> <%= etudiant.getPrenom() %>
-            </a>
-        </li>
-    <%
-        }
-    %>
-</ul>
+<table>
+    <thead>
+        <th><strong>Nom</strong> & prénom</th>
+        <th>Absences</th>
+        <th>Moyenne générale</th>
+    </thead>
+    <tbody>
+        <% for (Etudiant etudiant: (Collection<Etudiant>) request.getAttribute("etudiants")) { %>
+            <tr>
+                <td>
+                    <a href="<%= router.build("etudiant.show", new ParameterBag().add("etudiant", etudiant.getId())) %>">
+                        <strong><%= etudiant.getNom() %></strong> <%= etudiant.getPrenom() %>
+                    </a>
+                </td>
+                <td>
+                    <%= etudiant.getAbsences() %>
+                </td>
+                <td>
+                    <%= etudiant.getMoyenne() %>
+                </td>
+            </tr>
+        <% } %>
+    </tbody>
+</table>
 
 <%--
 <ul>

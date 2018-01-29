@@ -36,7 +36,7 @@ public class IndexController extends BaseController {
     }
 
     @Route(name = "index.error", path = "/error/{code}")
-    public Response errorAction(@Parameter(mask = "\\d{3}", name = "code") Integer error) {
+    public Response errorAction(@Parameter(mask = "\\d{3}", name = "code") int error) {
         return this.render("@error/404",
                 new ParameterBag()
                     .add("code", error)
@@ -70,6 +70,17 @@ public class IndexController extends BaseController {
         }
 
         return form;
+    }
+
+    @Route(name = "index.logout", path = "/logout")
+    public Response logoutAction(Request request) {
+
+        if(!this.isLogged()) {
+            return this.redirectToRoute("index.login");
+        }
+
+        this.getSession().removeAttribute("user");
+        return this.redirectToRoute("index.home");
     }
 
 }

@@ -10,19 +10,28 @@
 <jsp:useBean id="renderer" class="core.utils.Renderer" scope="application"/>
 
 <h1>Modules</h1>
-<ul>
-    <%
-        for (Module module : (Collection<Module>) request.getAttribute("modules")) {
-    %>
-        <li>
-            <a href="<%= router.build("module.show", new ParameterBag().add("module", module.getId())) %>">
-                <strong><%= module.getNom() %></strong>
-            </a>
-        </li>
-    <%
-        }
-    %>
-</ul>
+<table>
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Etudiants</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% for (Module module : (Collection<Module>) request.getAttribute("modules")) { %>
+            <tr>
+                <td>
+                    <a href="<%= router.build("module.show", new ParameterBag().add("module", module.getId())) %>">
+                        <strong><%= module.getNom() %></strong>
+                    </a>
+                </td>
+                <td>
+                    <%= module.getEtudiants().size() %>
+                </td>
+            </tr>
+        <% } %>
+    </tbody>
+</table>
 
 <%--
 <ul>

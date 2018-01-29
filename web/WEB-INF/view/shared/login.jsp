@@ -10,7 +10,7 @@
     <br/>
     <label>
         Mot de passe:
-        <input name="password" type="password" min="8" required />
+        <input name="password" type="password" min="8" required placeholder="mot de passe"/>
     </label>
     <br/>
     <button>Connexion</button>

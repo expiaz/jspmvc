@@ -59,33 +59,34 @@
 
     <div class="collapse navbar-collapse">
         <ul class="navbar-nav mr-auto">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="dropdown-etudiants" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Etudiants</a>
-                <div class="dropdown-menu" aria-labelledby="dropdown-etudiants">
-                    <a class="dropdown-item" href="<%= router.build("etudiant.list") %>">Voir les étudiants</a>
-                    <a class="dropdown-item" href="<%= router.build("etudiant.add") %>">Ajouter un étudiant</a>
-                </div>
-            </li>
-
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="dropdown-groups" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Modules</a>
-                <div class="dropdown-menu" aria-labelledby="dropdown-groups">
-                    <a class="dropdown-item" href="<%= router.build("module.list") %>">Voir les modules</a>
-                    <a class="dropdown-item" href="<%= router.build("module.add") %>">Ajouter un module</a>
-                </div>
-            </li>
-        </ul>
-        <ul class="navbar-nav">
-            <% if (connected) { %>
-                <% if (user.isAdmin()) { %>
-                    <li class="nav-item">
-                        <a href="<%= router.build("etudiant.list") %>">Administration</a>
+            <% if(connected) { %>
+                <% if(user.isAdmin()) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" id="dropdown-etudiants" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Etudiants</a>
+                        <div class="dropdown-menu" aria-labelledby="dropdown-etudiants">
+                            <a class="dropdown-item" href="<%= router.build("etudiant.list") %>">Voir les étudiants</a>
+                            <a class="dropdown-item" href="<%= router.build("etudiant.add") %>">Ajouter un étudiant</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" id="dropdown-groups" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Modules</a>
+                        <div class="dropdown-menu" aria-labelledby="dropdown-groups">
+                            <a class="dropdown-item" href="<%= router.build("module.list") %>">Voir les modules</a>
+                            <a class="dropdown-item" href="<%= router.build("module.add") %>">Ajouter un module</a>
+                        </div>
                     </li>
                 <% } else { %>
                     <li class="nav-item">
-                        <a href="<%= router.build("etudiant.show", new ParameterBag().add("etudiant", user.getId())) %>"><%= user.getLogin() %></a>
+                        <a href="<%= router.build("etudiant.show", new ParameterBag().add("etudiant", user.getId())) %>">Mon profil (<%= user.getLogin() %>)</a>
                     </li>
                 <% } %>
+            <% } %>
+        </ul>
+        <ul class="navbar-nav">
+            <% if (connected) { %>
+                <li class="nav-item">
+                    <a href="<%= router.build("index.logout") %>">Déconnexion</a>
+                </li>
             <% } else { %>
                 <li class="nav-item">
                     <a href="<%= router.build("index.login") %>">Connexion</a>

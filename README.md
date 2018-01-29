@@ -54,7 +54,12 @@ public class DemoController extends BaseController{
         );
     }
     
-    @Route(name = "demo.edit", path = "/edit/{demo}", methods = {HttpMethod.POST, HttpMethod.GET}, before = {AdminMiddleware.class})
+    @Route(
+        name = "demo.edit",
+        path = "/edit/{demo}",
+        methods = {HttpMethod.POST, HttpMethod.GET},
+        before = {AdminMiddleware.class}
+    )
     public Response editAction(
         Request request,
         @Parameter(name = "demo", mask = "\\d+") Demo demo

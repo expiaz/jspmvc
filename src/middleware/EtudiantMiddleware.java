@@ -23,7 +23,7 @@ public class EtudiantMiddleware extends Middleware {
     public Response apply(Request request, Response response) {
         HttpSession session = request.getRequest().getSession();
         User user = (User) session.getAttribute("user");
-        User requestedUser = (User) request.getPathParameter("user", false);
+        User requestedUser = (User) request.getPathParameter("etudiant", false);
 
         if (user == null) {
             return response.redirect(this.router.build("index.login"));

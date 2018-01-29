@@ -133,7 +133,7 @@ public class Route {
             // replace the {name} by arguments.get(name)
             path = path.substring(0, arg.getStart() - offset) + arguments.get(arg.getName()).toString() + path.substring(arg.getEnd() - offset);
             // increment offset by the size of the missing characters (fullgroup - replaced group)
-            offset += arg.getEnd() - arg.getStart() - arg.getName().length();
+            offset += arg.getEnd() - arg.getStart() - arguments.get(arg.getName()).toString().length();
         }
 
         return path;

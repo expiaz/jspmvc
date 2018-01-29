@@ -1,9 +1,6 @@
 package core;
 
-import controller.BaseController;
-import controller.ModuleController;
-import controller.IndexController;
-import controller.EtudiantController;
+import controller.*;
 import core.annotations.*;
 import core.annotations.Route;
 import core.database.Database;
@@ -29,13 +26,15 @@ public class FrontController extends HttpServlet {
     public static void die(Class from, Exception why) {
         System.out.println("\nFrontController::die : unrecoverable error from " + from.getName() + "\n" + why.getMessage());
         why.printStackTrace();
+        instance.destroy();
         System.exit(1);
     }
 
     private static Class[] controllers = new Class[]{
         IndexController.class,
         EtudiantController.class,
-        ModuleController.class
+        ModuleController.class,
+        NoteController.class
     };
 
     private static core.http.Route defaultRoute;
@@ -45,7 +44,7 @@ public class FrontController extends HttpServlet {
                 "default",
                 "{code}",
                 IndexController.class,
-                IndexController.class.getMethod("errorAction", Integer.class),
+                IndexController.class.getMethod("errorAction", int.class),
                 HttpMethod.GET,
                 new ArrayList<>(),
                 new ArrayList<>()
@@ -55,6 +54,9 @@ public class FrontController extends HttpServlet {
         }
     }
 
+    private static FrontController instance = null;
+    public static boolean DEV = true;
+
     private Router router;
     private Renderer renderer;
     private Container container;
@@ -62,6 +64,8 @@ public class FrontController extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
+
+        instance = this;
 
         this.container = new Container();
         this.router = new Router(this.container);
@@ -156,37 +160,47 @@ public class FrontController extends HttpServlet {
      */
     private void processRequest(HttpServletRequest request, HttpServletResponse response) {
 
+        this.container.singleton(HttpServletRequest.class, request);
+        this.container.singleton(HttpServletResponse.class, response);
+
+        Request realRequest = new Request(request);
+        Response realResponse = new Response(response);
+
+        this.container.singleton(Request.class, realRequest);
+        this.container.singleton(Response.class, realResponse);
+
         try {
-
-            this.container.singleton(HttpServletRequest.class, request);
-            this.container.singleton(HttpServletResponse.class, response);
-
-            request.setCharacterEncoding("UTF-8");
             response.setCharacterEncoding("UTF-8");
-
             request.setAttribute("title", request.getPathInfo());
-
-            Request realRequest = new Request(request);
-            Response realResponse = new Response(response);
-
-            this.container.singleton(Request.class, realRequest);
-            this.container.singleton(Response.class, realResponse);
 
             // dispatch control to view
             Match m = this.router.match(realRequest);
             if(m == null) { // no route found
-                m = new Match(defaultRoute, new ParameterBag().add("code", "404"));
+                throw new Exception();
             }
             this.dispatch(realRequest, realResponse, m);
 
         } catch (Exception e){
-            e.printStackTrace();
+            if (DEV) {
+                FrontController.die(FrontController.class, e);
+            }
+            try {
+                // dispatch to default route (404)
+                this.dispatch(
+                    realRequest,
+                    realResponse,
+                    new Match(defaultRoute, new ParameterBag().add("code", "404"))
+                );
+            } catch (Exception e2) {
+                FrontController.die(FrontController.class, e2);
+            }
         }
     }
 
     private void dispatch(Request request, Response response, final Match match)
-            throws InvocationTargetException, IllegalAccessException, NoSuchMethodException,
-            InstantiationException, ServletException, IOException, ClassNotFoundException {
+            throws InvalidParameterException, InvocationTargetException, IllegalAccessException,
+            NoSuchMethodException, InstantiationException, ServletException,
+            IOException, ClassNotFoundException {
 
         // resolve the controller with the Container Resolver
         final Object controller = this.container.resolve(match.getRoute().getController());
@@ -202,10 +216,11 @@ public class FrontController extends HttpServlet {
             if (p.isAnnotationPresent(Parameter.class)) { // annotation found for the specified parameter
                 Parameter pannotation;
                 Class parameterClass = p.getType();
-                Object rawParam, param;
+                Object param;
+                String rawParam;
 
                 pannotation = p.getAnnotation(Parameter.class);
-                rawParam = match.getParameters().get(pannotation.name());
+                rawParam = match.getParameters().get(pannotation.name()).toString();
 
                 // is fetchable present on the parameter type ? (it define the strategy to retrieve the given parameter)
                 if(Resolver.isInterfacePresent(Fetchable.class, parameterClass)) { // Fetchable present
@@ -213,6 +228,12 @@ public class FrontController extends HttpServlet {
                     Fetcher fetcher = (Fetcher) this.container.get(fetchable.from());
                     param = fetcher.fetch(rawParam);
                     if(param == null) {
+                        throw new InvalidParameterException(
+                            "can't dispatch to action " + controller.getClass().getName() + "::" +
+                            action.getName() + " : parameter " + pannotation.name() + " with provided value of " + rawParam +
+                            " for type " + parameterClass.getName()
+                        );
+                        /*
                         FrontController.die(
                             FrontController.class,
                             new InvalidParameterException(
@@ -221,13 +242,38 @@ public class FrontController extends HttpServlet {
                                 " for type " + parameterClass.getName()
                             )
                         );
+                         */
                     }
                 } else { // no fetching strategy provided, just retrieve it from the raw matched ones and cast it
-                    param = match.getParameters().get(pannotation.name());
+                    Object casted = null;
+                    if(parameterClass.getName().equals("int") || parameterClass.getName().equals(Integer.class.getName())) {
+                        casted = Integer.valueOf(rawParam);
+                    } else if(parameterClass.getName().equals("float") || parameterClass.getName().equals(Float.class.getName())) {
+                        casted = Float.valueOf(rawParam);
+                    } else if (parameterClass.getName().equals("double") || parameterClass.getName().equals(Double.class.getName())) {
+                        casted = Double.valueOf(rawParam);
+                    } else if (parameterClass.getName().equals(Short.class.getName()) || parameterClass.getName().equals("short")) {
+                        casted = Short.valueOf(rawParam);
+                    } else if (parameterClass.getName().equals("byte") || parameterClass.getName().equals(Byte.class.getName())) {
+                        casted = Byte.valueOf(rawParam);
+                    } else if (parameterClass.getName().equals("boolean") || parameterClass.getName().equals(Boolean.class.getName())) {
+                        casted = rawParam.toLowerCase().equals("true") || rawParam.toLowerCase().equals("1");
+                    } else if ( parameterClass.getName().equals(String.class.getName()) ) {
+                        casted = rawParam;
+                    } else {
+                        throw new InvalidParameterException(rawParam + " is not a possible value for type " + parameterClass.getName());
+                        /*
+                        FrontController.die(
+                            FrontController.class,
+                            new InvalidParameterException(rawParam + " is not a possible value for type " + parameterClass.getName())
+                        );
+                         */
+                    }
+                    param = casted;
                 }
                 // add it to the list
                 resolvedParameters.put(pannotation.name(), param);
-                rawParameters.put(pannotation.name(), (String) match.getParameters().get(pannotation.name()));
+                rawParameters.put(pannotation.name(), rawParam);
                 parameters[i++] = param;
             } else if (p.isAnnotationPresent(Inject.class)) { // Dependency injection asked
                 // get details for DI

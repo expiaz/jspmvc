@@ -112,19 +112,18 @@ public class ModuleController extends BaseController{
                 for(Map.Entry<String, String> note : request.getArrayParameter("notes").entrySet()) {
                     vo = new Note();
                     vo.setModule(module);
-                    vo.setValeur(/*Float.valueOf(note.getValue())*/noteService.isNoteValid(note.getValue(), true));
+                    vo.setValeur(noteService.isNoteValid(note.getValue(), true));
 
                     etudiant = etudiantDAO.getById(Integer.valueOf(note.getKey()));
-                    etudiant.addNote(vo);
-
                     vo.setEtudiant(etudiant);
-                    module.addNote(vo);
 
                     notes.add(vo);
                 }
 
                 for (Note note : notes) {
                     noteDAO.insert(note);
+                    note.getEtudiant().addNote(note);
+                    note.getModule().addNote(note);
                     etudiantDAO.update(note.getEtudiant());
                 }
 
