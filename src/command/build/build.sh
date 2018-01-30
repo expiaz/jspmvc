@@ -1,3 +1,7 @@
+#!/bin/bash
+
+# place yourself at /src/command and run ./build/build.sh
+
 cd ..
 echo "Building jar"
 javac -d ./command/build ./command/*.java

@@ -6,5 +6,5 @@
 
 <jsp:useBean id="$$lowerCaseClassName$$" class="entity.$$className$$" scope="request"/>
 
-<h1>${ $$lowerCaseClassName$$.id }</h1>
+<h1>$$className$$ ${ $$lowerCaseClassName$$.id }</h1>
 <a href="<%= router.build("$$lowerCaseClassName$$.edit", new ParameterBag().add("$$lowerCaseClassName$$", $$lowerCaseClassName$$.getId())) %>">Edit</a>

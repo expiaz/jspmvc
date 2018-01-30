@@ -74,7 +74,7 @@ public class $$className$$Controller extends BaseController {
             String param = request.getParameter("param");
 
             if (param == null) {
-                this.addError("Champs invalide");
+                this.addError("Invalid field");
                 return form;
             }
 

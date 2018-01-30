@@ -30,7 +30,7 @@ public class FrontController extends HttpServlet {
         System.exit(1);
     }
 
-    private static Class[] controllers = new Class[]{
+    private static Class<? extends BaseController>[] controllers = new Class[]{
         IndexController.class,
         EtudiantController.class,
         ModuleController.class,
@@ -55,7 +55,7 @@ public class FrontController extends HttpServlet {
     }
 
     private static FrontController instance = null;
-    public static boolean DEV = true;
+    public static boolean DEV = false;
 
     private Router router;
     private Renderer renderer;
@@ -309,8 +309,6 @@ public class FrontController extends HttpServlet {
         };
 
         // IOC and get response
-        // Response res = (Response) action.invoke(controller, parameters);
-
         Response res = match.getRoute().getMiddlewareStack(this.container, controllerMiddleware).apply(request, response);
 
         // switch over response type to handle it correctly, either print or redirection

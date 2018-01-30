@@ -18,11 +18,3 @@
     <br/>
     <button>Ajouter</button>
 </form>
-
-<%--
-<ul>
-    <c:forEach items="${etudiants}" var="etudiant">
-        <li>${ etudiant.name }</li>
-    </c:forEach>
-</ul>
---%>

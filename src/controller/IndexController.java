@@ -7,10 +7,8 @@ import core.annotations.Route;
 import core.http.HttpMethod;
 import core.http.Request;
 import core.http.Response;
-import core.http.Router;
 import core.utils.Container;
 import core.utils.ParameterBag;
-import core.utils.Renderer;
 import entity.Admin;
 import entity.User;
 import repository.AdminDAO;
@@ -23,10 +21,6 @@ public class IndexController extends BaseController {
 
     @Route(name = "index.home")
     public Response indexAction() {
-        this.addMessage("Message");
-        this.addConfirmation("Confirmation");
-        this.addError("Error");
-
         AdminDAO dao = ((AdminDAO) this.container.get(AdminDAO.class));
         if (!dao.exists("root")) {
             dao.insert(new Admin("root", "root"));
@@ -73,7 +67,7 @@ public class IndexController extends BaseController {
     }
 
     @Route(name = "index.logout", path = "/logout")
-    public Response logoutAction(Request request) {
+    public Response logoutAction() {
 
         if(!this.isLogged()) {
             return this.redirectToRoute("index.login");

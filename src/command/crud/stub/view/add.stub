@@ -6,7 +6,6 @@
 <h1>Add a $$lowerCaseClassName$$</h1>
 
 <form action="<%= router.build("$$lowerCaseClassName$$.add") %>" method="post">
-    <input type="number" name="id" placeholder="Id">
     <%-- TODO add field --%>
     <br/>
     <button>Add</button>

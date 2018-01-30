@@ -3,13 +3,14 @@
 
 <jsp:useBean id="router" class="core.http.Router" scope="application"/>
 <jsp:useBean id="renderer" class="core.utils.Renderer" scope="application"/>
+<jsp:useBean id="container" class="core.utils.Container" scope="application"/>
 
 <jsp:useBean id="$$lowerCaseClassName$$" class="entity.$$className$$" scope="request"/>
 
 <h1>Edit a $$lowerCaseClassName$$</h1>
 
 <form action="<%= router.build("$$lowerCaseClassName$$.edit", new ParameterBag().add("$$lowerCaseClassName$$", $$lowerCaseClassName$$.getId())) %>" method="post">
-    <input type="number" name="id" placeholder="Id" value="${$$lowerCaseClassName$$.id}">
+    <input type="hidden" name="id" value="${$$lowerCaseClassName$$.id}">
     <%-- TODO add fields --%>
     <br/>
     <button>Edit</button>

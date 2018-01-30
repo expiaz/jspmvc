@@ -13,11 +13,3 @@
     <br/>
     <button>Modifer</button>
 </form>
-
-<%--
-<ul>
-    <c:forEach items="${etudiants}" var="etudiant">
-        <li>${ etudiant.name }</li>
-    </c:forEach>
-</ul>
---%>

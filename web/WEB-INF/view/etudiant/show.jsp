@@ -1,3 +1,4 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page import="core.utils.ParameterBag" %>
 <%@ page import="entity.Module" %>
 <%@ page import="entity.Note" %>
