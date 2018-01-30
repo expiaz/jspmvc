@@ -19,7 +19,7 @@ Controllers and actions are identified by the `@Route` tag, for a controller to 
 The controller will be resolved and instanciated during the process of IOC, so you can DI any class in it with the `@Inject` annotation
 
 The actions will also be resolved by the container, so `@Inject` can be performed. More powerfull, the `@Parameter` tag provide typecast and object hydratation from the parameter.
-- If a non native type is awaited for a `@Parameter` parameter on an action, the resolver will look for a `@Fetchable` annotation on the provided class. If it exists, it'll call the `@Fetcher::fetch` (from `@Fetchable::from`) with the raw value of the path parameter (e.g. an id most of the time)
+- If a non native type is awaited for a `@Parameter` parameter on an action, the resolver will look for a `@Fetchable` annotation on the provided class. If it exists, it'll call the `@Fetcher::fetch` (from `@Fetchable::from`) with the raw value of the path parameter (an id most of the time)
 - If it's a native type, it'll try to cast it in the provided type
 ```java
 @PathPrefix("/demo")
@@ -105,8 +105,8 @@ public class DemoController extends BaseController{
 
 #### Middleware
 A middleware will be called before or after a controller and can modifiy the response or deny access.
-- to modify `Request` or `Response` and continue the call use `return this.next.apply(request, response)`, you can even not return the response and modify it (so you'll mock to be the last on the chain)
-- to deny access or redirect use `response.redirect(URL)` to break to call queue
+- to modify `Request` or `Response` and continue the call use `return this.next.apply(request, response)`, you can even modify the response avec calling the next and before returning it (so you'll mock to be the last on the chain)
+- to deny access or redirect use `response.redirect(URL)` to break the call queue
 ```java
 public class AdminMiddleware extends Middleware {
     
@@ -131,7 +131,7 @@ public class AdminMiddleware extends Middleware {
 ```
 
 ### DAO
-A DAO for an DB entity only have to extend of `BaseDAO<Entity>` and basic CRUD operations will be provided
+A DAO for a DB entity only have to extend from `BaseDAO<Entity>` and basic CRUD operations will be provided
 ```java
 public class DemoDAO extends BaseDAO<Demo> {
 
@@ -143,18 +143,18 @@ public class DemoDAO extends BaseDAO<Demo> {
 ```
 
 ### Entity
-An entity need to extends from `BaseEntity`, it'll provide `@Fetcher` / `@Fetchable` mecanism.
-An entity must have an Id.
+An entity must extends from `BaseEntity`, it'll provide `@Fetcher` / `@Fetchable` mecanism.
+All entities must have an Id.
 ```java
 @Entity
 public class Demo extends BaseEntity {
 
     @Id
     @GeneratedValue
-	private Integer id;
+    private Integer id;
 
     @Column(nullable = false)
-	private String name;
+    private String name;
     
     public Demo() {}
     
@@ -251,3 +251,10 @@ JSP files have access to `Router`, `Renderer`, `Container` classes to build URLS
 - execute action depending on response typen either a JSP view or URL redirection
     - JSP: `RequestDispatcher::include(header.jsp)`, `RequestDispatcher::include(Response::getDestination)`, `RequestDispatcher::include(footer.jsp)`
     - URL: `HTTPServletResponse::sendRedirect(Response::getDestination)`
+    
+## Dependencies
+_place these jar in `/web/WEB-INF/lib/` or add them with a dependency manager_
+- **JPA** `org.eclipse.persistence:org.eclipse.persistence.jpa:2.7.0`
+- **JSTL** `javax.servlet:jstl:jar:1.2`
+- **SQLite** `org.xerial:sqlite-jdbc:3.21.0`
+- **MySQL** `mysql:mysql-connector-java:5.1.45`

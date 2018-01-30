@@ -4,3 +4,4 @@ out
 src/command/build/command
 web/WEB-INF/data
 *.bak
+*.sql
