@@ -20,6 +20,7 @@
         <th>Nom</th>
         <th>Prénom</th>
         <th>Moyenne</th>
+        <th>Absences</th>
     </thead>
     <tbody>
         <% for (Etudiant etudiant : module.getEtudiants()) { %>
@@ -34,6 +35,9 @@
                 </td>
                 <td>
                     <%= etudiant.getMoyenne(module) %>
+                </td>
+                <td>
+                    <%= etudiant.getAbsences() %>
                 </td>
             </tr>
         <% } %>
